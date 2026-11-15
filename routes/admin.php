@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
 use App\Http\Controllers\AuthController;
 
 // Register admin-only anonymous components. Move to AppServiceProvider when replacing demo routes.
@@ -26,10 +27,10 @@ $loadAuraAdminDemo = static function (string $page, ?string $recordId = null, ?s
     return view($recordId === null ? $routeMap[$page] : 'admin.pages.record', compact('demoData', 'demoTable', 'demoPage', 'pageTitle'));
 };
 
-Route::get('/admin/login', [AuthController::class, 'showLogin'])->name('aura.admin.login');
-Route::post('/admin/login', [AuthController::class, 'login'])->defaults('area', 'admin')->middleware('throttle:5,1')->name('aura.admin.login.store');
-Route::get('/admin/forgot-password', [AuthController::class, 'showForgotPassword'])->defaults('area', 'admin')->name('aura.admin.password.request');
-Route::post('/admin/forgot-password', [AuthController::class, 'sendResetLink'])->defaults('area', 'admin')->middleware('throttle:3,1')->name('aura.admin.password.email');
+Route::get('/admin/login', fn (AuthController $controller) => $controller->showLogin('admin'))->name('aura.admin.login');
+Route::post('/admin/login', fn (Request $request, AuthController $controller) => $controller->login($request, 'admin'))->middleware('throttle:5,1')->name('aura.admin.login.store');
+Route::get('/admin/forgot-password', fn (AuthController $controller) => $controller->showForgotPassword('admin'))->name('aura.admin.password.request');
+Route::post('/admin/forgot-password', fn (Request $request, AuthController $controller) => $controller->sendResetLink($request, 'admin'))->middleware('throttle:3,1')->name('aura.admin.password.email');
 
 Route::prefix('admin')->name('aura.admin.')->middleware(['auth', 'active', 'super_admin'])->group(static function () use ($loadAuraAdminDemo) {
     Route::get('/', static fn () => $loadAuraAdminDemo('dashboard'))->name('index');
