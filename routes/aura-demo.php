@@ -28,6 +28,7 @@ Route::get('/login', [AuthController::class, 'showLogin'])->name('aura.login');
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1')->name('aura.login.store');
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('aura.logout');
 Route::get('/register', fn () => view('auth.register', ['demoRoute' => 'register']))->name('aura.register');
+Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:3,1')->name('aura.register.store');
 Route::get('/forgot-password', [AuthController::class, 'showForgotPassword'])->name('aura.forgot-password');
 Route::post('/forgot-password', [AuthController::class, 'sendResetLink'])->middleware('throttle:3,1')->name('aura.password.email');
 Route::get('/reset-password/{token}', [AuthController::class, 'showResetPassword'])->name('aura.password.reset');

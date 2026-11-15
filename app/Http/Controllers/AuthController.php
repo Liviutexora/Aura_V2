@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password as PasswordRule;
 use Illuminate\View\View;
@@ -39,6 +40,50 @@ class AuthController extends Controller
         $request->session()->regenerate();
 
         return redirect()->intended($area === 'admin' ? route('aura.admin.index') : route('aura.dashboard'));
+    }
+
+    public function register(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'min:2', 'max:255'],
+            'email' => ['required', 'email:rfc', 'max:255', 'unique:users,email'],
+            'password' => ['required', 'confirmed', PasswordRule::min(8)],
+            'terms' => ['accepted'],
+        ]);
+
+        $user = DB::transaction(function () use ($validated): User {
+            $user = new User;
+            $user->forceFill([
+                'name' => $validated['name'],
+                'email' => strtolower($validated['email']),
+                'password' => Hash::make($validated['password']),
+                'role' => 'user',
+                'status' => 'active',
+                'sponsor_id' => null,
+                'referral_code' => $this->uniqueReferralCode($validated['name']),
+            ]);
+            $user->save();
+            $user->profile()->create();
+
+            return $user;
+        });
+
+        Auth::login($user);
+        $request->session()->regenerate();
+
+        return redirect()->route('aura.dashboard');
+    }
+
+    private function uniqueReferralCode(string $name): string
+    {
+        $prefix = preg_replace('/[^A-Za-z0-9]/', '', Str::ascii(trim(explode(' ', $name)[0]))) ?: 'Aura';
+        $prefix = substr($prefix, 0, 12);
+
+        do {
+            $code = $prefix.Str::upper(Str::random(5));
+        } while (User::where('referral_code', $code)->exists());
+
+        return $code;
     }
 
     public function logout(Request $request): RedirectResponse
