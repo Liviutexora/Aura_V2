@@ -1,10 +1,11 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\AuthController;
 
 // UI-only preview routes. Replace with authenticated controllers before production.
-Route::get('/', fn () => view('public.landing', ['demoRoute' => 'home']))->name('aura.home');
+Route::get('/', fn () => view('public.landing', ['demoRoute' => 'home', 'publicOnly' => ! Auth::check()]))->name('aura.home');
 Route::get('/pricing', fn () => view('public.pricing', ['demoRoute' => 'pricing']))->name('aura.pricing');
 Route::middleware(['auth', 'active'])->group(function (): void {
     Route::get('/dashboard', fn () => view('dashboard.index', ['demoRoute' => 'dashboard']))->name('aura.dashboard');

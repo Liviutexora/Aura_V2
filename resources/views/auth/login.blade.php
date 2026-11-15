@@ -12,3 +12,4 @@
 <div class="links"><a href="{{ route('aura.register') }}">Creează un cont</a><a href="{{ ($authArea ?? 'user') === 'admin' ? route('aura.admin.password.request') : route('aura.forgot-password') }}">Ai uitat parola?</a></div>
 </form></div></main>
 @endsection
+<script>localStorage.removeItem('aura-logged-out');</script>
