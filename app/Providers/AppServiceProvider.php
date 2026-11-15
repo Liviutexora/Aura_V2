@@ -11,7 +11,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Authentication endpoints use Laravel's numeric throttle middleware.
     }
 
     /**
