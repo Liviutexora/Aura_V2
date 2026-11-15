@@ -1,0 +1,1 @@
+<footer class="admin-footer"><span>Aura Admin · Ecosistemul tău, într-un singur loc.</span><span>Interfață demonstrativă · Fără operațiuni reale · 2026</span></footer>

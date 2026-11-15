@@ -1,0 +1,2 @@
+@props(['icon', 'value', 'label', 'trend'])
+<div class="kpi"><span class="kpi-icon"><x-aura-admin::icon :name="$icon" /></span><div><b>{{ $value }}</b><small>{{ $label }}</small><div class="trend">↗ {{ $trend }}</div></div></div>

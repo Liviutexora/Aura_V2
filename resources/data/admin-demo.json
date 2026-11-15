@@ -1,0 +1,1301 @@
+{
+  "fixtures": {
+    "users": [
+      {
+        "id": "USR-001",
+        "name": "Ana Popa",
+        "email": "ana.popa@example.com",
+        "registered": "2026-10-05",
+        "plan": "Premium",
+        "earnings": 430,
+        "xp": 430,
+        "status": "Activ",
+        "apps": "Angels Legacy"
+      },
+      {
+        "id": "USR-002",
+        "name": "Mihai Ionescu",
+        "email": "mihai.ionescu@example.com",
+        "registered": "2026-10-06",
+        "plan": "Free",
+        "earnings": 80,
+        "xp": 240,
+        "status": "Activ",
+        "apps": "Loyalty Club"
+      },
+      {
+        "id": "USR-003",
+        "name": "Andrei Marinescu",
+        "email": "andrei.marinescu@example.com",
+        "registered": "2026-10-07",
+        "plan": "Premium",
+        "earnings": 250,
+        "xp": 610,
+        "status": "Activ",
+        "apps": "Texora Studio"
+      },
+      {
+        "id": "USR-004",
+        "name": "Elena Dumitrescu",
+        "email": "elena.dumitrescu@example.com",
+        "registered": "2026-10-08",
+        "plan": "Free",
+        "earnings": 45,
+        "xp": 120,
+        "status": "Inactiv",
+        "apps": "Texora CRM"
+      },
+      {
+        "id": "USR-005",
+        "name": "Ioana Radu",
+        "email": "ioana.radu@example.com",
+        "registered": "2026-10-09",
+        "plan": "Premium trimestrial",
+        "earnings": 150,
+        "xp": 340,
+        "status": "Activ",
+        "apps": "Aurelion"
+      },
+      {
+        "id": "USR-006",
+        "name": "Radu Pavel",
+        "email": "radu.pavel@example.com",
+        "registered": "2026-10-10",
+        "plan": "Free",
+        "earnings": 0,
+        "xp": 50,
+        "status": "Suspendat",
+        "apps": "Angels Legacy"
+      },
+      {
+        "id": "USR-007",
+        "name": "Cristina Matei",
+        "email": "cristina.matei@example.com",
+        "registered": "2026-10-11",
+        "plan": "Free",
+        "earnings": 95,
+        "xp": 210,
+        "status": "Activ",
+        "apps": "Loyalty Club"
+      },
+      {
+        "id": "USR-008",
+        "name": "Alexandru Stan",
+        "email": "alexandru.stan@example.com",
+        "registered": "2026-10-12",
+        "plan": "Premium",
+        "earnings": 380,
+        "xp": 750,
+        "status": "Activ",
+        "apps": "Texora Studio"
+      },
+      {
+        "id": "USR-009",
+        "name": "Diana Lupu",
+        "email": "diana.lupu@example.com",
+        "registered": "2026-10-13",
+        "plan": "Free",
+        "earnings": 0,
+        "xp": 90,
+        "status": "Activ",
+        "apps": "Texora CRM"
+      },
+      {
+        "id": "USR-010",
+        "name": "Gabriel Oprea",
+        "email": "gabriel.oprea@example.com",
+        "registered": "2026-10-14",
+        "plan": "Premium",
+        "earnings": 150,
+        "xp": 430,
+        "status": "Activ",
+        "apps": "Aurelion"
+      },
+      {
+        "id": "USR-011",
+        "name": "Alina Tudor",
+        "email": "alina.tudor@example.com",
+        "registered": "2026-10-15",
+        "plan": "Free",
+        "earnings": 45,
+        "xp": 160,
+        "status": "Activ",
+        "apps": "Angels Legacy"
+      },
+      {
+        "id": "USR-012",
+        "name": "Vlad Dobre",
+        "email": "vlad.dobre@example.com",
+        "registered": "2026-10-16",
+        "plan": "Premium",
+        "earnings": 80,
+        "xp": 280,
+        "status": "Activ",
+        "apps": "Loyalty Club"
+      }
+    ],
+    "opportunities": [
+      {
+        "id": "OPP-001",
+        "title": "Bonus cont bancar – până la 100 lei",
+        "summary": "Recompensă externă condiționată; informativă.",
+        "provider": "Furnizor bancar demo",
+        "category": "Promoții bancare",
+        "rewardType": "Bonus furnizor extern",
+        "amount": 100,
+        "payer": "Furnizor extern",
+        "users": 1248,
+        "icon": "bank",
+        "status": "Activă",
+        "geo": "România",
+        "eligibility": "18+, eligibilitate și condiții verificate în regulamentul partenerului",
+        "start": "2026-11-01",
+        "end": "2026-11-30",
+        "featured": "Da",
+        "limits": 20,
+        "instructions": "Citește regulamentul, îndeplinește condițiile și așteaptă validarea partenerului.",
+        "terms": "Exemplu demonstrativ. Nu reprezintă venit garantat."
+      },
+      {
+        "id": "OPP-002",
+        "title": "Cashback la cumpărături",
+        "summary": "Recompensă externă condiționată; informativă.",
+        "provider": "Partener cashback demo",
+        "category": "Cashback",
+        "rewardType": "Cashback",
+        "amount": 50,
+        "payer": "Furnizor extern",
+        "users": 986,
+        "icon": "cart",
+        "status": "Activă",
+        "geo": "România",
+        "eligibility": "18+, eligibilitate și condiții verificate în regulamentul partenerului",
+        "start": "2026-11-01",
+        "end": "2026-11-30",
+        "featured": "Da",
+        "limits": 20,
+        "instructions": "Citește regulamentul, îndeplinește condițiile și așteaptă validarea partenerului.",
+        "terms": "Exemplu demonstrativ. Nu reprezintă venit garantat."
+      },
+      {
+        "id": "OPP-003",
+        "title": "Recomandă Texora Studio",
+        "summary": "Comision validat de aplicația sursă.",
+        "provider": "Texora Studio",
+        "category": "Recomandări",
+        "rewardType": "Fixă",
+        "amount": 150,
+        "payer": "Texora Studio",
+        "users": 312,
+        "icon": "coins",
+        "status": "Activă",
+        "geo": "România",
+        "eligibility": "18+, eligibilitate și condiții verificate în regulamentul partenerului",
+        "start": "2026-11-01",
+        "end": "2026-11-30",
+        "featured": "Da",
+        "limits": 20,
+        "instructions": "Citește regulamentul, îndeplinește condițiile și așteaptă validarea partenerului.",
+        "terms": "Exemplu demonstrativ. Nu reprezintă venit garantat."
+      },
+      {
+        "id": "OPP-004",
+        "title": "Angels Legacy – Recomandă & Câștigă",
+        "summary": "Comision validat de aplicația sursă.",
+        "provider": "Angels Legacy",
+        "category": "Recomandări",
+        "rewardType": "Procentuală",
+        "amount": 10,
+        "payer": "Angels Legacy",
+        "users": 287,
+        "icon": "wings",
+        "status": "Activă",
+        "geo": "România",
+        "eligibility": "18+, eligibilitate și condiții verificate în regulamentul partenerului",
+        "start": "2026-11-01",
+        "end": "2026-11-30",
+        "featured": "Nu",
+        "limits": 20,
+        "instructions": "Citește regulamentul, îndeplinește condițiile și așteaptă validarea partenerului.",
+        "terms": "Exemplu demonstrativ. Nu reprezintă venit garantat."
+      },
+      {
+        "id": "OPP-005",
+        "title": "Program Loyalty Club",
+        "summary": "Comision validat de aplicația sursă.",
+        "provider": "Loyalty Club",
+        "category": "Abonamente",
+        "rewardType": "Fixă",
+        "amount": 45,
+        "payer": "Loyalty Club",
+        "users": 104,
+        "icon": "infinity",
+        "status": "Pauză",
+        "geo": "România",
+        "eligibility": "18+, eligibilitate și condiții verificate în regulamentul partenerului",
+        "start": "2026-11-01",
+        "end": "2026-11-30",
+        "featured": "Nu",
+        "limits": 20,
+        "instructions": "Citește regulamentul, îndeplinește condițiile și așteaptă validarea partenerului.",
+        "terms": "Exemplu demonstrativ. Nu reprezintă venit garantat."
+      },
+      {
+        "id": "OPP-006",
+        "title": "Texora CRM – Recomandări recurente",
+        "summary": "Comision validat de aplicația sursă.",
+        "provider": "Texora CRM",
+        "category": "Vânzări",
+        "rewardType": "Procentuală",
+        "amount": 30,
+        "payer": "Texora CRM",
+        "users": 0,
+        "icon": "gem",
+        "status": "Ciornă",
+        "geo": "România",
+        "eligibility": "18+, eligibilitate și condiții verificate în regulamentul partenerului",
+        "start": "2026-11-01",
+        "end": "2026-11-30",
+        "featured": "Nu",
+        "limits": 20,
+        "instructions": "Citește regulamentul, îndeplinește condițiile și așteaptă validarea partenerului.",
+        "terms": "Exemplu demonstrativ. Nu reprezintă venit garantat."
+      }
+    ],
+    "transactions": [
+      {
+        "id": "TX-001",
+        "user": "Ana Popa",
+        "source": "Texora Studio",
+        "type": "Comision ecosistem",
+        "amount": 150,
+        "currency": "RON",
+        "status": "Disponibil",
+        "date": "2026-11-05",
+        "reference": "DEMO-TEXORA-1001"
+      },
+      {
+        "id": "TX-002",
+        "user": "Mihai Ionescu",
+        "source": "Angels Legacy",
+        "type": "Comision ecosistem",
+        "amount": 80,
+        "currency": "RON",
+        "status": "În așteptare",
+        "date": "2026-11-05",
+        "reference": "DEMO-ANGELS-1002"
+      },
+      {
+        "id": "TX-003",
+        "user": "Elena Dumitrescu",
+        "source": "Loyalty Club",
+        "type": "Comision ecosistem",
+        "amount": 45,
+        "currency": "RON",
+        "status": "Confirmat",
+        "date": "2026-11-05",
+        "reference": "DEMO-LOYALTY-1003"
+      },
+      {
+        "id": "TX-004",
+        "user": "Andrei Marinescu",
+        "source": "Texora CRM",
+        "type": "Comision ecosistem",
+        "amount": 100,
+        "currency": "RON",
+        "status": "Plătit",
+        "date": "2026-11-05",
+        "reference": "DEMO-TEXORA-1004"
+      },
+      {
+        "id": "TX-005",
+        "user": "Cristina Matei",
+        "source": "Angels Legacy",
+        "type": "Comision ecosistem",
+        "amount": 30,
+        "currency": "RON",
+        "status": "Reversat",
+        "date": "2026-11-05",
+        "reference": "DEMO-ANGELS-1005"
+      },
+      {
+        "id": "TX-006",
+        "user": "Gabriel Oprea",
+        "source": "Texora Studio",
+        "type": "Comision ecosistem",
+        "amount": 150,
+        "currency": "RON",
+        "status": "Anulat",
+        "date": "2026-11-05",
+        "reference": "DEMO-TEXORA-1006"
+      },
+      {
+        "id": "TX-007",
+        "user": "Ana Popa",
+        "source": "Furnizor bancar demo",
+        "type": "Bonus extern informativ",
+        "amount": 100,
+        "currency": "RON",
+        "status": "Informativ",
+        "date": "2026-11-05",
+        "reference": "DEMO-FURNIZOR-1007"
+      },
+      {
+        "id": "TX-008",
+        "user": "Ioana Radu",
+        "source": "Texora Studio",
+        "type": "Comision ecosistem",
+        "amount": 150,
+        "currency": "RON",
+        "status": "În așteptare",
+        "date": "2026-11-05",
+        "reference": "DEMO-TEXORA-1008"
+      }
+    ],
+    "subscriptions": [
+      {
+        "id": "SUB-001",
+        "user": "Ana Popa",
+        "plan": "Premium",
+        "amount": 15,
+        "interval": "Lunar",
+        "renewal": "2026-12-05",
+        "status": "Activ"
+      },
+      {
+        "id": "SUB-002",
+        "user": "Andrei Marinescu",
+        "plan": "Premium",
+        "amount": 15,
+        "interval": "Lunar",
+        "renewal": "2026-12-05",
+        "status": "Activ"
+      },
+      {
+        "id": "SUB-003",
+        "user": "Ioana Radu",
+        "plan": "Premium trimestrial",
+        "amount": 45,
+        "interval": "3 luni",
+        "renewal": "2026-12-05",
+        "status": "Activ"
+      },
+      {
+        "id": "SUB-004",
+        "user": "Alexandru Stan",
+        "plan": "Premium",
+        "amount": 15,
+        "interval": "Lunar",
+        "renewal": "2026-12-05",
+        "status": "Activ"
+      },
+      {
+        "id": "SUB-005",
+        "user": "Gabriel Oprea",
+        "plan": "Premium",
+        "amount": 15,
+        "interval": "Lunar",
+        "renewal": "2026-12-05",
+        "status": "Plată eșuată"
+      },
+      {
+        "id": "SUB-006",
+        "user": "Vlad Dobre",
+        "plan": "Premium",
+        "amount": 15,
+        "interval": "Lunar",
+        "renewal": "2026-12-05",
+        "status": "Activ"
+      }
+    ],
+    "categories": [
+      {
+        "id": "CAT-001",
+        "name": "Promoții bancare",
+        "description": "Bonusuri externe informative",
+        "visibility": "Toți utilizatorii",
+        "status": "Activă"
+      },
+      {
+        "id": "CAT-002",
+        "name": "Cashback",
+        "description": "Programe de parteneriat independente",
+        "visibility": "Toți utilizatorii",
+        "status": "Activă"
+      },
+      {
+        "id": "CAT-003",
+        "name": "Recomandări",
+        "description": "Programe de parteneriat independente",
+        "visibility": "Toți utilizatorii",
+        "status": "Activă"
+      },
+      {
+        "id": "CAT-004",
+        "name": "Vânzări",
+        "description": "Programe de parteneriat independente",
+        "visibility": "Toți utilizatorii",
+        "status": "Activă"
+      }
+    ],
+    "eligibility": [
+      {
+        "id": "ELG-001",
+        "name": "Client nou bancar",
+        "category": "Promoții bancare",
+        "conditions": "18+, client nou și regulament verificat",
+        "geo": "România",
+        "visibility": "Toți utilizatorii",
+        "status": "Activă"
+      },
+      {
+        "id": "ELG-002",
+        "name": "Conversie calificată",
+        "category": "Recomandări",
+        "conditions": "Contract și plată confirmate de partener",
+        "geo": "România",
+        "visibility": "Toți utilizatorii",
+        "status": "Activă"
+      }
+    ],
+    "missions": [
+      {
+        "id": "MSN-001",
+        "title": "Bonus bancar – până la 100 lei",
+        "opportunity": "OPP-001",
+        "user": "Ana Popa",
+        "verification": "Eveniment API extern",
+        "xp": 50,
+        "deadline": "2026-11-30",
+        "status": "În progres",
+        "steps": [
+          "Citește cerințele promoției",
+          "Deschide contul eligibil",
+          "Îndeplinește condițiile promoției",
+          "Confirmă eligibilitatea",
+          "Verifică primirea bonusului extern"
+        ]
+      },
+      {
+        "id": "MSN-002",
+        "title": "Recomandă un client Texora Studio",
+        "opportunity": "OPP-003",
+        "user": "Ioana Radu",
+        "verification": "Aprobare administrator",
+        "xp": 50,
+        "deadline": "2026-12-31",
+        "status": "De verificat",
+        "steps": [
+          "Citește programul",
+          "Distribuie linkul",
+          "Așteaptă validarea partenerului"
+        ]
+      },
+      {
+        "id": "MSN-003",
+        "title": "Cashback supermarket",
+        "opportunity": "OPP-002",
+        "user": "Mihai Ionescu",
+        "verification": "Declarație utilizator",
+        "xp": 50,
+        "deadline": "2026-11-30",
+        "status": "Finalizată",
+        "steps": [
+          "Citește condițiile",
+          "Efectuează cumpărăturile eligibile",
+          "Verifică recompensa la partener"
+        ]
+      }
+    ],
+    "verification": [
+      {
+        "id": "VER-001",
+        "user": "Ioana Radu",
+        "mission": "Recomandă un client Texora Studio",
+        "type": "Aprobare administrator",
+        "evidence": "Referință demo TS-1008",
+        "date": "2026-11-05",
+        "status": "În așteptare"
+      },
+      {
+        "id": "VER-002",
+        "user": "Ana Popa",
+        "mission": "Bonus bancar – până la 100 lei",
+        "type": "Încărcare document",
+        "evidence": "confirmare_demo.pdf — exemplu, fără document real",
+        "date": "2026-11-04",
+        "status": "În așteptare"
+      }
+    ],
+    "levels": [
+      {
+        "id": "LVL-001",
+        "name": "Începător",
+        "level": 1,
+        "threshold": 0,
+        "status": "Activ"
+      },
+      {
+        "id": "LVL-002",
+        "name": "Organizat",
+        "level": 2,
+        "threshold": 100,
+        "status": "Activ"
+      },
+      {
+        "id": "LVL-003",
+        "name": "Explorator",
+        "level": 3,
+        "threshold": 300,
+        "status": "Activ"
+      },
+      {
+        "id": "LVL-004",
+        "name": "Optimizator",
+        "level": 4,
+        "threshold": 600,
+        "status": "Activ"
+      },
+      {
+        "id": "LVL-005",
+        "name": "Expert Aura",
+        "level": 5,
+        "threshold": 1000,
+        "status": "Activ"
+      }
+    ],
+    "xprules": [
+      {
+        "id": "XP-001",
+        "name": "Oportunitate citită",
+        "event": "opportunity.read",
+        "xp": 10,
+        "status": "Activ"
+      },
+      {
+        "id": "XP-002",
+        "name": "Misiune începută",
+        "event": "mission.created",
+        "xp": 20,
+        "status": "Activ"
+      },
+      {
+        "id": "XP-003",
+        "name": "Misiune finalizată",
+        "event": "mission.completed",
+        "xp": 50,
+        "status": "Activ"
+      },
+      {
+        "id": "XP-004",
+        "name": "Recompensă confirmată",
+        "event": "reward.confirmed",
+        "xp": 100,
+        "status": "Activ"
+      }
+    ],
+    "achievements": [
+      {
+        "id": "BDG-001",
+        "name": "Primul pas",
+        "icon": "rocket",
+        "criteria": "Prima misiune începută",
+        "xp": 20,
+        "status": "Activă"
+      },
+      {
+        "id": "BDG-002",
+        "name": "Explorator bancar",
+        "icon": "bank",
+        "criteria": "Explorează o promoție bancară",
+        "xp": 10,
+        "status": "Activă"
+      },
+      {
+        "id": "BDG-003",
+        "name": "Vânător de bonusuri",
+        "icon": "coins",
+        "criteria": "Finalizează 3 misiuni",
+        "xp": 50,
+        "status": "Activă"
+      },
+      {
+        "id": "BDG-004",
+        "name": "Expert Aura",
+        "icon": "crown",
+        "criteria": "Nivel 5 și 20 de misiuni",
+        "xp": 100,
+        "status": "Activă"
+      }
+    ],
+    "payouts": [
+      {
+        "id": "PAY-001",
+        "user": "Ana Popa",
+        "source": "Texora Studio",
+        "amount": 150,
+        "currency": "RON",
+        "date": "2026-11-05",
+        "status": "Solicitată",
+        "reference": "DEMO-PAY-001"
+      },
+      {
+        "id": "PAY-002",
+        "user": "Andrei Marinescu",
+        "source": "Texora CRM",
+        "amount": 100,
+        "currency": "RON",
+        "date": "2026-11-02",
+        "status": "Plătită",
+        "reference": "DEMO-PAY-002"
+      }
+    ],
+    "referrals": [
+      {
+        "id": "REF-001",
+        "name": "Recomandă Angels Legacy",
+        "source": "Angels Legacy",
+        "model": "Procentual",
+        "value": 10,
+        "event": "Comandă finalizată",
+        "eligibility": "Client nou eligibil",
+        "approval": "Eveniment validat la sursă",
+        "pattern": "https://example.com/demo/angels-legacy/{demo-code}",
+        "terms": "Program demonstrativ; calculul și validarea aparțin partenerului.",
+        "status": "Activ"
+      },
+      {
+        "id": "REF-002",
+        "name": "Recomandă Loyalty Club",
+        "source": "Loyalty Club",
+        "model": "Fix",
+        "value": 45,
+        "event": "Conversie validată",
+        "eligibility": "Client nou eligibil",
+        "approval": "Eveniment validat la sursă",
+        "pattern": "https://example.com/demo/loyalty-club/{demo-code}",
+        "terms": "Program demonstrativ; calculul și validarea aparțin partenerului.",
+        "status": "Activ"
+      },
+      {
+        "id": "REF-003",
+        "name": "Recomandă Texora Studio",
+        "source": "Texora Studio",
+        "model": "Fix",
+        "value": 150,
+        "event": "Contract și plată validate",
+        "eligibility": "Client nou eligibil",
+        "approval": "Eveniment validat la sursă",
+        "pattern": "https://example.com/demo/texora-studio/{demo-code}",
+        "terms": "Program demonstrativ; calculul și validarea aparțin partenerului.",
+        "status": "Activ"
+      },
+      {
+        "id": "REF-004",
+        "name": "Recomandă Texora CRM",
+        "source": "Texora CRM",
+        "model": "Recurent",
+        "value": 30,
+        "event": "Abonament plătit",
+        "eligibility": "Client nou eligibil",
+        "approval": "Eveniment validat la sursă",
+        "pattern": "https://example.com/demo/texora-crm/{demo-code}",
+        "terms": "Program demonstrativ; calculul și validarea aparțin partenerului.",
+        "status": "Activ"
+      }
+    ],
+    "conversions": [
+      {
+        "id": "CNV-001",
+        "user": "Ana Popa",
+        "source": "Texora Studio",
+        "clicks": 31,
+        "registrations": 5,
+        "leads": 3,
+        "conversions": 1,
+        "amount": 150,
+        "status": "Validată"
+      },
+      {
+        "id": "CNV-002",
+        "user": "Mihai Ionescu",
+        "source": "Angels Legacy",
+        "clicks": 44,
+        "registrations": 8,
+        "leads": 4,
+        "conversions": 1,
+        "amount": 80,
+        "status": "În așteptare"
+      },
+      {
+        "id": "CNV-003",
+        "user": "Elena Dumitrescu",
+        "source": "Loyalty Club",
+        "clicks": 19,
+        "registrations": 3,
+        "leads": 2,
+        "conversions": 1,
+        "amount": 45,
+        "status": "Validată"
+      }
+    ],
+    "links": [
+      {
+        "id": "LNK-001",
+        "user": "Ana Popa",
+        "source": "Texora Studio",
+        "url": "https://example.com/demo/program/1",
+        "clicks": 31,
+        "status": "Activ"
+      },
+      {
+        "id": "LNK-002",
+        "user": "Mihai Ionescu",
+        "source": "Angels Legacy",
+        "url": "https://example.com/demo/program/2",
+        "clicks": 44,
+        "status": "Activ"
+      },
+      {
+        "id": "LNK-003",
+        "user": "Elena Dumitrescu",
+        "source": "Loyalty Club",
+        "url": "https://example.com/demo/program/3",
+        "clicks": 19,
+        "status": "Activ"
+      }
+    ],
+    "events": [
+      {
+        "id": "EVT-001",
+        "source": "Angels Legacy",
+        "event": "commission.confirmed",
+        "reference": "DEMO-EVENT-1",
+        "date": "2026-11-05",
+        "time": "15:42",
+        "status": "Procesat"
+      },
+      {
+        "id": "EVT-002",
+        "source": "Loyalty Club",
+        "event": "referral.validated",
+        "reference": "DEMO-EVENT-2",
+        "date": "2026-11-05",
+        "time": "15:20",
+        "status": "Procesat"
+      },
+      {
+        "id": "EVT-003",
+        "source": "Texora Studio",
+        "event": "commission.confirmed",
+        "reference": "DEMO-EVENT-3",
+        "date": "2026-11-05",
+        "time": "14:55",
+        "status": "Procesat"
+      },
+      {
+        "id": "EVT-004",
+        "source": "Texora CRM",
+        "event": "subscription.paid",
+        "reference": "DEMO-EVENT-4",
+        "date": "2026-11-05",
+        "time": "14:31",
+        "status": "Procesat"
+      },
+      {
+        "id": "EVT-005",
+        "source": "Aurelion",
+        "event": "user.linked",
+        "reference": "DEMO-EVENT-5",
+        "date": "2026-11-05",
+        "time": "14:10",
+        "status": "Eroare"
+      }
+    ],
+    "notifications": [
+      {
+        "id": "MSG-001",
+        "title": "O oportunitate nouă te așteaptă",
+        "channel": "În aplicație",
+        "audience": "Toți utilizatorii",
+        "trigger": "Oportunitate nouă",
+        "schedule": "2026-11-06T09:00",
+        "message": "Descoperă noile oportunități eligibile pentru tine.",
+        "status": "Ciornă"
+      },
+      {
+        "id": "MSG-002",
+        "title": "Continuă misiunea ta",
+        "channel": "Web Push",
+        "audience": "Premium",
+        "trigger": "Memento misiune",
+        "schedule": "2026-11-07T09:00",
+        "message": "Următorul pas al misiunii tale este pregătit.",
+        "status": "Programată · demo"
+      }
+    ],
+    "announcements": [
+      {
+        "id": "ANN-001",
+        "title": "Bine ai venit în Aura",
+        "channel": "În aplicație",
+        "audience": "Toți utilizatorii",
+        "trigger": "Înregistrare",
+        "message": "Descoperă oportunități și urmărește progresul.",
+        "status": "Ciornă"
+      }
+    ],
+    "messageTemplates": [
+      {
+        "id": "TPL-001",
+        "title": "Comision disponibil",
+        "channel": "Email",
+        "audience": "Toți utilizatorii",
+        "trigger": "Comision disponibil",
+        "message": "Salut, {name}! Ai un comision confirmat disponibil.",
+        "status": "Activ"
+      },
+      {
+        "id": "TPL-002",
+        "title": "Reînnoire abonament",
+        "channel": "Email",
+        "audience": "Premium",
+        "trigger": "Reînnoire abonament",
+        "message": "Abonamentul tău se reînnoiește la {renewal_date}.",
+        "status": "Activ"
+      }
+    ],
+    "plans": [
+      {
+        "id": "PLAN-001",
+        "name": "Aura Free",
+        "price": 0,
+        "interval": "Lunar",
+        "missions": 3,
+        "features": "Oportunități și progres de bază; acces la comisioanele câștigate",
+        "status": "Activ"
+      },
+      {
+        "id": "PLAN-002",
+        "name": "Aura Premium",
+        "price": 15,
+        "interval": "Lunar",
+        "missions": 999,
+        "features": "Misiuni nelimitate, mementouri avansate, analize extinse",
+        "status": "Activ"
+      },
+      {
+        "id": "PLAN-003",
+        "name": "Aura Premium trimestrial",
+        "price": 45,
+        "interval": "3 luni",
+        "missions": 999,
+        "features": "Toate beneficiile Premium pentru trei luni",
+        "status": "Activ"
+      }
+    ],
+    "audit": [
+      {
+        "id": "AUD-001",
+        "actor": "Liviu · Super Admin",
+        "action": "Comision vizualizat",
+        "entity": "TX-001",
+        "source": "Interfață demo",
+        "date": "2026-11-05 15:42",
+        "status": "Înregistrat"
+      },
+      {
+        "id": "AUD-002",
+        "actor": "Sistem demo",
+        "action": "Eveniment comision primit",
+        "entity": "EVT-001",
+        "source": "Texora Studio · simulare",
+        "date": "2026-11-05 15:30",
+        "status": "Înregistrat"
+      }
+    ]
+  },
+  "tables": {
+    "users": [
+      "Toți utilizatorii",
+      "name,registered,plan,earnings,xp,status"
+    ],
+    "subscriptions": [
+      "Abonamente utilizatori",
+      "user,plan,amount,interval,renewal,status"
+    ],
+    "opportunities": [
+      "Oportunități",
+      "title,category,amount,payer,end,status"
+    ],
+    "categories": [
+      "Categorii de oportunități",
+      "name,description,visibility,status"
+    ],
+    "eligibility": [
+      "Reguli de eligibilitate",
+      "name,category,conditions,geo,status"
+    ],
+    "missions": [
+      "Misiuni & șabloane",
+      "title,user,verification,xp,deadline,status"
+    ],
+    "verification": [
+      "Verificări misiuni",
+      "user,mission,type,date,status"
+    ],
+    "levels": [
+      "XP & niveluri",
+      "level,name,threshold,status"
+    ],
+    "xprules": [
+      "Reguli XP",
+      "name,event,xp,status"
+    ],
+    "achievements": [
+      "Insigne & realizări",
+      "name,criteria,xp,status"
+    ],
+    "transactions": [
+      "Tranzacții & registru",
+      "user,source,type,amount,status,date"
+    ],
+    "commissions": [
+      "Aprobări comisioane",
+      "user,source,reference,amount,status"
+    ],
+    "payouts": [
+      "Cereri de plată",
+      "id,user,source,amount,date,status"
+    ],
+    "referrals": [
+      "Programe de recomandări",
+      "name,source,model,value,event,status"
+    ],
+    "conversions": [
+      "Conversii recomandări",
+      "user,source,clicks,registrations,leads,conversions,amount,status"
+    ],
+    "links": [
+      "Linkuri de recomandare",
+      "user,source,url,clicks,status"
+    ],
+    "events": [
+      "Evenimente & sincronizări",
+      "source,event,reference,date,time,status"
+    ],
+    "notifications": [
+      "Notificări",
+      "title,channel,audience,trigger,status"
+    ],
+    "announcements": [
+      "Anunțuri",
+      "title,channel,audience,status"
+    ],
+    "messageTemplates": [
+      "Șabloane de mesaje",
+      "title,channel,trigger,status"
+    ],
+    "plans": [
+      "Planuri de abonament",
+      "name,price,interval,missions,features,status"
+    ],
+    "audit": [
+      "Jurnal de audit",
+      "actor,action,entity,source,date,status"
+    ]
+  },
+  "schemas": {
+    "users": "name,email,plan,status",
+    "opportunities": "title,summary,provider,category,rewardType,amount,payer,geo,eligibility,start,end,limits,featured,icon,image,instructions,terms,status",
+    "categories": "name,description,visibility,status",
+    "eligibility": "name,category,conditions,geo,visibility,status",
+    "missions": "title,opportunity,user,description,requiredAction,verification,xp,deadline,status,steps",
+    "levels": "name,level,threshold,status",
+    "xprules": "name,event,xp,status",
+    "achievements": "name,icon,criteria,xp,status",
+    "referrals": "name,source,model,value,event,pattern,eligibility,approval,terms,status",
+    "notifications": "title,channel,audience,trigger,schedule,message,status",
+    "plans": "name,price,interval,missions,features,status",
+    "announcements": "title,channel,audience,trigger,schedule,message,status",
+    "messageTemplates": "title,channel,audience,trigger,schedule,message,status"
+  },
+  "labels": {
+    "id": "Referință",
+    "name": "Nume",
+    "email": "Email",
+    "registered": "Înregistrare",
+    "plan": "Abonament",
+    "earnings": "Câștiguri demo",
+    "xp": "XP",
+    "status": "Stare",
+    "apps": "Aplicații",
+    "title": "Titlu",
+    "summary": "Rezumat",
+    "provider": "Furnizor",
+    "category": "Categorie",
+    "rewardType": "Tip recompensă",
+    "amount": "Valoare",
+    "payer": "Plătitor",
+    "users": "Participanți",
+    "geo": "Geografie",
+    "eligibility": "Eligibilitate",
+    "start": "Început",
+    "end": "Expiră",
+    "featured": "Recomandată",
+    "limits": "Limită participări",
+    "instructions": "Instrucțiuni",
+    "terms": "Termeni",
+    "icon": "Simbol",
+    "image": "Imagine / cale asset demo",
+    "user": "Utilizator",
+    "source": "Aplicația sursă",
+    "type": "Tip",
+    "currency": "Monedă",
+    "date": "Dată",
+    "reference": "Referință externă",
+    "interval": "Interval",
+    "renewal": "Reînnoire",
+    "description": "Descriere",
+    "visibility": "Vizibilitate",
+    "conditions": "Condiții",
+    "opportunity": "Oportunitate",
+    "verification": "Verificare",
+    "deadline": "Termen",
+    "steps": "Pași ordonați",
+    "requiredAction": "Acțiune obligatorie",
+    "mission": "Misiune",
+    "evidence": "Dovadă demo",
+    "level": "Nivel",
+    "threshold": "Prag XP",
+    "event": "Eveniment",
+    "criteria": "Criteriu de deblocare",
+    "model": "Model comision",
+    "value": "Valoare (lei sau %)",
+    "approval": "Logica aprobării",
+    "pattern": "Model link demo",
+    "clicks": "Clickuri",
+    "registrations": "Înscrieri",
+    "leads": "Leaduri calificate",
+    "conversions": "Conversii",
+    "url": "Link demonstrativ",
+    "time": "Oră",
+    "channel": "Canal",
+    "audience": "Public",
+    "trigger": "Declanșator",
+    "schedule": "Programare demo",
+    "message": "Mesaj",
+    "price": "Preț RON / interval",
+    "missions": "Limită misiuni (999 = nelimitat)",
+    "features": "Beneficii",
+    "actor": "Cine",
+    "action": "Acțiune",
+    "entity": "Entitate"
+  },
+  "nav": [
+    [
+      "Prezentare",
+      [
+        [
+          "dashboard",
+          "Dashboard",
+          "home"
+        ],
+        [
+          "analytics",
+          "Rapoarte & Analize",
+          "chart"
+        ]
+      ]
+    ],
+    [
+      "Administrare",
+      [
+        [
+          "users",
+          "Utilizatori",
+          "users"
+        ],
+        [
+          "subscriptions",
+          "Abonamente utilizatori",
+          "crown"
+        ],
+        [
+          "activity",
+          "Activitate utilizatori",
+          "activity"
+        ],
+        [
+          "opportunities",
+          "Oportunități",
+          "target"
+        ],
+        [
+          "categories",
+          "Categorii & eligibilitate",
+          "folder"
+        ],
+        [
+          "missions",
+          "Misiuni & șabloane",
+          "game"
+        ],
+        [
+          "verification",
+          "Verificări misiuni",
+          "check"
+        ],
+        [
+          "gamification",
+          "XP & Gamification",
+          "star"
+        ]
+      ]
+    ],
+    [
+      "Financiar & ecosistem",
+      [
+        [
+          "wallet",
+          "Comisioane & Wallet",
+          "coins"
+        ],
+        [
+          "transactions",
+          "Tranzacții",
+          "wallet"
+        ],
+        [
+          "payouts",
+          "Cereri de plată",
+          "arrow"
+        ],
+        [
+          "referrals",
+          "Programe de recomandări",
+          "link"
+        ],
+        [
+          "conversions",
+          "Conversii & linkuri",
+          "target"
+        ],
+        [
+          "integrations",
+          "Integrări aplicații",
+          "link"
+        ],
+        [
+          "events",
+          "Evenimente & sincronizări",
+          "activity"
+        ]
+      ]
+    ],
+    [
+      "Platformă",
+      [
+        [
+          "notifications",
+          "Comunicații",
+          "bell"
+        ],
+        [
+          "plans",
+          "Planuri abonament",
+          "crown"
+        ],
+        [
+          "roles",
+          "Roluri & permisiuni",
+          "shield"
+        ],
+        [
+          "audit",
+          "Jurnal de audit",
+          "list"
+        ],
+        [
+          "settings",
+          "Setări",
+          "settings"
+        ]
+      ]
+    ]
+  ],
+  "iconPaths": {
+    "home": "M3 11 12 3l9 8 M5 10v11h5v-7h4v7h5V10",
+    "users": "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M16 3a4 4 0 0 1 0 8 M22 21v-2a4 4 0 0 0-3-4 M13 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0",
+    "chart": "M3 21h18 M5 17V9h3v8 M11 17V5h3v12 M17 17V2h3v15",
+    "game": "M7 6h10c4 0 6 13 2 13l-4-4H9l-4 4C1 19 3 6 7 6 M7 9v5 M4.5 11.5h5 M16 10h.01 M18 13h.01",
+    "check": "M9 3H5v18h14V3h-4 M9 2h6v4H9Z M8 13l3 3 5-6",
+    "arrow": "M4 12h16 M14 6l6 6-6 6",
+    "activity": "M2 12h4l3-8 5 16 3-8h5",
+    "shield": "m12 2 9 4v6c0 6-9 10-9 10S3 18 3 12V6Z M8 12l3 3 5-6",
+    "list": "M8 5h12 M8 12h12 M8 19h12 M3 5h.01 M3 12h.01 M3 19h.01",
+    "settings": "M9 3h6l1 3 3 1 2 4-2 3v4l-4 3-3-1-3 1-4-3v-4l-2-3 2-4 3-1Z M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0",
+    "search": "M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0 M15 15l6 6",
+    "edit": "m15 4 5 5 M4 20l4-1L21 6l-5-5L3 14Z",
+    "eye": "M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0",
+    "plus": "M12 3v18 M3 12h18",
+    "close": "M5 5l14 14 M5 19 14 5",
+    "download": "M12 2v13 M6 9l6 6 6-6 M3 16v5h18v-5",
+    "menu": "M3 6h18 M3 12h18 M3 18h18",
+    "help": "M9 8a3 3 0 1 1 5 2c-2 1-2 2-2 4 M12 18h.01 M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0",
+    "monitor": "M2 3h20v14H2Z M12 17v5 M7 22h10",
+    "sort": "M8 3v18 M4 7l4-4 4 4 M16 21V3 M12 17l4 4 4-4"
+  },
+  "connections": [
+    {
+      "id": "APP-001",
+      "name": "Angels Legacy",
+      "status": "Connected",
+      "health": "OK",
+      "sync": "05 nov. 2026 · 15:40",
+      "users": 287,
+      "commissions": 5420,
+      "events": 48
+    },
+    {
+      "id": "APP-002",
+      "name": "Loyalty Club",
+      "status": "Connected",
+      "health": "OK",
+      "sync": "05 nov. 2026 · 15:40",
+      "users": 104,
+      "commissions": 3180,
+      "events": 32
+    },
+    {
+      "id": "APP-003",
+      "name": "Texora Studio",
+      "status": "Connected",
+      "health": "OK",
+      "sync": "05 nov. 2026 · 15:40",
+      "users": 312,
+      "commissions": 1460,
+      "events": 25
+    },
+    {
+      "id": "APP-004",
+      "name": "Texora CRM",
+      "status": "Connected",
+      "health": "OK",
+      "sync": "05 nov. 2026 · 15:40",
+      "users": 248,
+      "commissions": 1720,
+      "events": 37
+    },
+    {
+      "id": "APP-005",
+      "name": "Aurelion",
+      "status": "Connected",
+      "health": "Degraded",
+      "sync": "05 nov. 2026 · 15:40",
+      "users": 415,
+      "commissions": 0,
+      "events": 17
+    }
+  ]
+}
