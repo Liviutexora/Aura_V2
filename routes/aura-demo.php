@@ -23,6 +23,8 @@ Route::get('/integrations', fn () => view('integrations.index', ['demoRoute' => 
 Route::get('/subscriptions', fn () => view('subscriptions.index', ['demoRoute' => 'subscriptions']))->name('aura.subscriptions');
 Route::get('/profile', fn () => view('profile.index', ['demoRoute' => 'profile']))->name('aura.profile');
 Route::get('/settings', fn () => view('profile.settings', ['demoRoute' => 'settings']))->name('aura.settings');
+Route::post('/settings/profile', [AuthController::class, 'updateProfile'])->middleware('throttle:5,1')->name('aura.settings.profile.update');
+Route::post('/settings/password', [AuthController::class, 'updatePassword'])->middleware('throttle:5,1')->name('aura.settings.password.update');
 });
 Route::get('/login', [AuthController::class, 'showLogin'])->name('aura.login');
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1')->name('aura.login.store');

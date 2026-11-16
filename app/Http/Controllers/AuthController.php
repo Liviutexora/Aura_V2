@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password as PasswordRule;
 use Illuminate\View\View;
 
@@ -84,6 +85,39 @@ class AuthController extends Controller
         } while (User::where('referral_code', $code)->exists());
 
         return $code;
+    }
+
+    public function updateProfile(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'min:2', 'max:255'],
+            'email' => ['required', 'email:rfc', 'max:255', Rule::unique('users', 'email')->ignore($user->getKey())],
+        ]);
+
+        $user->forceFill([
+            'name' => $validated['name'],
+            'email' => strtolower($validated['email']),
+        ])->save();
+
+        return back()->with('profile_status', 'Datele contului au fost actualizate.');
+    }
+
+    public function updatePassword(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'current_password' => ['required', 'current_password:web'],
+            'password' => ['required', 'confirmed', PasswordRule::min(8)],
+        ], [
+            'current_password.current_password' => 'Parola actuală este incorectă.',
+        ]);
+
+        $request->user()->forceFill([
+            'password' => Hash::make($validated['password']),
+        ])->save();
+
+        return back()->with('password_status', 'Parola a fost schimbată.');
     }
 
     public function logout(Request $request): RedirectResponse
