@@ -1,9 +1,10 @@
 <?php
 
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\AuthController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Http\Request;
-use App\Http\Controllers\AuthController;
 
 // Register admin-only anonymous components. Move to AppServiceProvider when replacing demo routes.
 Blade::anonymousComponentPath(resource_path('views/admin/components'), 'aura-admin');
@@ -21,9 +22,12 @@ $loadAuraAdminDemo = static function (string $page, ?string $recordId = null, ?s
     };
     $tableKey = $page === 'commissions' ? 'transactions' : $page;
     $tableRows = $demoData['fixtures'][$tableKey] ?? [];
-    if ($page === 'commissions') $tableRows = array_values(array_filter($tableRows, static fn ($row) => $row['type'] === 'Comision ecosistem'));
+    if ($page === 'commissions') {
+        $tableRows = array_values(array_filter($tableRows, static fn ($row) => $row['type'] === 'Comision ecosistem'));
+    }
     $demoTable = ['columns' => explode(',', $demoData['tables'][$page][1] ?? ''), 'rows' => $tableRows];
-    $demoPage = $page . ($recordId !== null ? '/'.$recordId : '') . ($mode !== null ? '/'.$mode : '');
+    $demoPage = $page.($recordId !== null ? '/'.$recordId : '').($mode !== null ? '/'.$mode : '');
+
     return view($recordId === null ? $routeMap[$page] : 'admin.pages.record', compact('demoData', 'demoTable', 'demoPage', 'pageTitle'));
 };
 
@@ -34,7 +38,12 @@ Route::post('/admin/forgot-password', fn (Request $request, AuthController $cont
 
 Route::prefix('admin')->name('aura.admin.')->middleware(['auth', 'active', 'super_admin'])->group(static function () use ($loadAuraAdminDemo) {
     Route::get('/', static fn () => $loadAuraAdminDemo('dashboard'))->name('index');
-    Route::get('/users', static fn () => $loadAuraAdminDemo('users'))->name('users');
+    Route::get('/users', [UserController::class, 'index'])->name('users');
+    Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
+    Route::post('/users/{user}/password', [UserController::class, 'resetPassword'])
+        ->middleware('throttle:admin-password-reset')
+        ->name('users.password.reset');
+    Route::get('/users/{user}', [UserController::class, 'show'])->name('users.show');
     Route::get('/subscriptions', static fn () => $loadAuraAdminDemo('subscriptions'))->name('subscriptions');
     Route::get('/opportunities', static fn () => $loadAuraAdminDemo('opportunities'))->name('opportunities');
     Route::get('/categories', static fn () => $loadAuraAdminDemo('categories'))->name('categories');
