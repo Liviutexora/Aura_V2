@@ -29,4 +29,14 @@ h1,h2,h3{color:#fffaff;text-shadow:0 2px 10px #10031c40}p,.muted,small{color:#d8
 input,select,textarea{background:linear-gradient(120deg,#1c102f,#170d29);border-color:#b678e65b;color:#f7efff;box-shadow:inset 0 1px 5px #05000840}input::placeholder{color:#bda7d1}.demo{color:#d6bfe9;background:#a45df30b;border-color:#b27cdb45}.notice{background:linear-gradient(100deg,#8f4cb817,#4e236c16);color:#d6c2e9;border-color:#b47fdf30}.footer{color:#b5a0c8}
 .aura-svg{width:1em;height:1em;display:inline-block;vertical-align:-.15em;fill:none;stroke:currentColor;stroke-width:1.65;stroke-linecap:round;stroke-linejoin:round;overflow:visible;flex-shrink:0}.icon .aura-svg,.tile .aura-svg,.medal .aura-svg,.big-icon .aura-svg{width:1em;height:1em;vertical-align:middle}.icon .aura-svg-coins,.icon .aura-svg-star{color:#ffd77a;filter:drop-shadow(0 0 7px #ffc14566)}.icon .aura-svg-target,.icon .aura-svg-rocket{color:#d29aff;filter:drop-shadow(0 0 7px #b963fa77)}.big-icon{color:#c996ff;filter:drop-shadow(0 8px 18px #a34bff99)!important}.aura-svg-crown{filter:drop-shadow(0 0 4px #f8ba4c45)}.mobile-nav{background:#160c29f5}
 @keyframes aura-progress-in{from{transform:scaleX(.6);opacity:.5}to{transform:scaleX(1);opacity:1}}@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}@media(max-width:700px){.hero .intro:after{width:62%;height:160px;right:-18px}.intro p{max-width:250px}}
+
+/* Profile email confirmation dialog */
+.profile-email-dialog{max-width:520px}
+.profile-email-dialog .dialog-close{float:right;padding:2px;color:#d8b4ef;font-size:20px}
+.profile-email-dialog h2{margin:0 36px 10px 0}
+.profile-email-dialog input{width:100%}
+.profile-email-dialog .dialog-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+.profile-email-dialog .dialog-error{display:block;margin-top:6px;color:#ff9fb1}
+.profile-email-dialog .dialog-helper{margin-top:18px;font-size:10px}
+@media(max-width:700px){.profile-email-dialog{padding:22px}.profile-email-dialog .dialog-actions{flex-direction:column}.profile-email-dialog .dialog-actions .btn{width:100%}}
 .hero .intro:after{background-size:100% 100%}

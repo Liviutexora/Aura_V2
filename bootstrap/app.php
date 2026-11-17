@@ -14,6 +14,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->authenticateSessions();
+
         $middleware->alias([
             'active' => EnsureActiveUser::class,
             'super_admin' => EnsureSuperAdmin::class,

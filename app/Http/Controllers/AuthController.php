@@ -90,18 +90,40 @@ class AuthController extends Controller
     public function updateProfile(Request $request): RedirectResponse
     {
         $user = $request->user();
+        $normalizedEmail = Str::lower($request->string('email')->toString());
+        $emailChanged = $normalizedEmail !== Str::lower($user->email);
 
-        $validated = $request->validate([
+        $request->merge(['email' => $normalizedEmail]);
+
+        $validated = $request->validateWithBag('profileUpdate', [
             'name' => ['required', 'string', 'min:2', 'max:255'],
             'email' => ['required', 'email:rfc', 'max:255', Rule::unique('users', 'email')->ignore($user->getKey())],
+            'current_password' => $emailChanged
+                ? ['required', 'string', 'current_password:web']
+                : ['exclude'],
+        ], [
+            'email.unique' => 'Adresa de email este deja utilizată.',
+            'current_password.required' => 'Introdu parola curentă pentru a schimba adresa de email.',
+            'current_password.current_password' => 'Parola curentă este incorectă.',
         ]);
 
-        $user->forceFill([
+        $attributes = [
             'name' => $validated['name'],
-            'email' => strtolower($validated['email']),
-        ])->save();
+            'email' => $validated['email'],
+        ];
 
-        return back()->with('profile_status', 'Datele contului au fost actualizate.');
+        if ($emailChanged) {
+            $attributes['email_verified_at'] = null;
+        }
+
+        $user->forceFill($attributes)->save();
+
+        return back()->with(
+            'profile_status',
+            $emailChanged
+                ? 'Datele contului au fost actualizate. Noua adresă de email este neverificată.'
+                : 'Datele contului au fost actualizate.',
+        );
     }
 
     public function updatePassword(Request $request): RedirectResponse

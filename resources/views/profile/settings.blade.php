@@ -8,7 +8,34 @@
 </div>
 @elseif(session('profile_status'))
 <div class="notice" role="status" style="color:#9cf3a8">{{ session('profile_status') }}</div>
-@endif<label>Nume complet</label><input name="name" value="{{ auth()->user()->name }}" required><label>Email</label><input name="email" type="email" value="{{ auth()->user()->email }}" required><label>Limba interfeței</label><select><option>Română</option></select><label><input type="checkbox" checked style="width:auto"> Mementouri despre misiuni (preferință demo)</label><label><input type="checkbox" style="width:auto"> Noutăți și oportunități recomandate (preferință demo)</label><button class="btn" style="margin-top:20px">Salvează modificările</button></form><form class="card settings-form" id="password-form" method="POST" action="{{ route('aura.settings.password.update') }}" style="margin-top:24px">
+@endif
+<label for="profile-name">Nume complet</label>
+<input id="profile-name" name="name" value="{{ old('name', auth()->user()->name) }}" required autocomplete="name">
+@error('name', 'profileUpdate')
+<small role="alert" style="display:block;color:#ff9fb1;margin-top:6px">{{ $message }}</small>
+@enderror
+<label for="profile-email">Email</label>
+<input id="profile-email" name="email" type="email" value="{{ old('email', auth()->user()->email) }}" required autocomplete="email">
+@error('email', 'profileUpdate')
+<small role="alert" style="display:block;color:#ff9fb1;margin-top:6px">{{ $message }}</small>
+@enderror
+<label>Limba interfeței</label><select><option>Română</option></select><label><input type="checkbox" checked style="width:auto"> Mementouri despre misiuni (preferință demo)</label><label><input type="checkbox" style="width:auto"> Noutăți și oportunități recomandate (preferință demo)</label><button class="btn" type="submit" data-profile-save style="margin-top:20px">Salvează modificările</button></form>
+<template id="profile-email-confirmation-template" data-current-email="{{ auth()->user()->email }}" data-reopen="{{ $errors->profileUpdate->has('current_password') ? '1' : '0' }}">
+<button class="dialog-close" type="button" data-profile-email-cancel aria-label="Închide dialogul">✕</button>
+<h2>Confirmă identitatea</h2>
+<p>Pentru a modifica adresa de email, introdu parola curentă a contului tău.</p>
+<label for="profile-email-current-password">Parola curentă</label>
+<input id="profile-email-current-password" name="current_password" type="password" form="profile-form" required autocomplete="off">
+@error('current_password', 'profileUpdate')
+<small class="dialog-error" role="alert">{{ $message }}</small>
+@enderror
+<div class="dialog-actions">
+<button class="btn" type="button" data-profile-email-confirm>Confirmă schimbarea</button>
+<button class="btn secondary" type="button" data-profile-email-cancel>Anulează</button>
+</div>
+<p class="dialog-helper">Parola este verificată securizat de Laravel și nu este stocată în browser.</p>
+</template>
+<form class="card settings-form" id="password-form" method="POST" action="{{ route('aura.settings.password.update') }}" style="margin-top:24px">
 @csrf
 <h2>Schimbă parola</h2>
 <label>Parola actuală</label>
@@ -31,4 +58,5 @@
 @endif
 <button class="btn" style="margin-top:20px">Schimbă parola</button>
 </form></div><footer class="footer"><span><svg class="aura-svg aura-svg-crown" aria-hidden="true"><use href="{{ asset('assets/aura/icons.svg') }}#crown"></use></svg> Aura · Descoperă oportunități. Câștigă mai mult.</span><span>Date demonstrative · Câștigurile sunt condiționate și nu sunt garantate.</span></footer></main><nav class="mobile-nav"><a href="#/dashboard" class=""><span><svg class="aura-svg aura-svg-sparkle" aria-hidden="true"><use href="{{ asset('assets/aura/icons.svg') }}#sparkle"></use></svg></span>Dashboard</a><a href="#/opportunities" class=""><span><svg class="aura-svg aura-svg-target" aria-hidden="true"><use href="{{ asset('assets/aura/icons.svg') }}#target"></use></svg></span>Oportunități</a><a href="#/missions" class=""><span><svg class="aura-svg aura-svg-checklist" aria-hidden="true"><use href="{{ asset('assets/aura/icons.svg') }}#checklist"></use></svg></span>Misiunile mele</a><a href="#/wallet" class=""><span><svg class="aura-svg aura-svg-wallet" aria-hidden="true"><use href="{{ asset('assets/aura/icons.svg') }}#wallet"></use></svg></span>Wallet</a></nav>
+<script src="{{ asset('assets/aura/settings-security.js') }}" defer></script>
 @endsection
