@@ -4,12 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Auth\Events\PasswordReset;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password as PasswordRule;
@@ -29,16 +30,20 @@ class AuthController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        $user = User::whereRaw('LOWER(email) = ?', [strtolower($credentials['email'])])->first();
-        $valid = $user && $user->isActive() && Hash::check($credentials['password'], $user->password);
-        $valid = $valid && ($area === 'admin' ? $user->role === 'super_admin' : $user->role === 'user');
+        $email = strtolower($credentials['email']);
+        $requiredRole = $area === 'admin' ? 'super_admin' : 'user';
+        $authenticated = Auth::attemptWhen(
+            [
+                static fn (Builder $query): Builder => $query->whereRaw('LOWER(email) = ?', [$email]),
+                'password' => $credentials['password'],
+            ],
+            static fn (User $user): bool => $user->isActive() && $user->role === $requiredRole,
+            $request->boolean('remember'),
+        );
 
-        if (! $valid) {
+        if (! $authenticated) {
             return back()->withErrors(['email' => 'Datele de autentificare nu sunt valide.'])->onlyInput('email');
         }
-
-        Auth::login($user, $request->boolean('remember'));
-        $request->session()->regenerate();
 
         return redirect()->intended($area === 'admin' ? route('aura.admin.index') : route('aura.dashboard'));
     }
