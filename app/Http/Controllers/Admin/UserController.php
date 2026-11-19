@@ -45,7 +45,9 @@ class UserController extends Controller
         $sortColumn = self::SORTABLE_COLUMNS[$sort] ?? 'created_at';
 
         $users = User::query()
-            ->select(['id', 'name', 'email', 'created_at', 'status'])
+            ->select(['id', 'name', 'email', 'created_at', 'status', 'referral_code', 'sponsor_id'])
+            ->with('sponsor:id,name')
+            ->withCount('sponsoredUsers')
             ->when($search !== '', function (Builder $query) use ($search): void {
                 $query->where(function (Builder $query) use ($search): void {
                     $query->where('name', 'like', "%{$search}%")
@@ -77,8 +79,8 @@ class UserController extends Controller
     {
         $user->load([
             'profile:id,user_id,phone,locale,timezone',
-            'sponsor:id,name,email',
-        ]);
+            'sponsor:id,name',
+        ])->loadCount('sponsoredUsers');
 
         return view('admin.pages.user-show', [
             'user' => $user,

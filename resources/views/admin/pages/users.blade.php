@@ -46,6 +46,9 @@
                     <th scope="col">Abonament</th>
                     <th scope="col">Câștiguri</th>
                     <th scope="col">XP</th>
+                    <th scope="col">Sponsor direct</th>
+                    <th scope="col">Cod de recomandare</th>
+                    <th scope="col">Recomandări directe</th>
                     <th scope="col">Stare</th>
                     <th scope="col">Acțiuni</th>
                 </tr>
@@ -60,6 +63,9 @@
                         <td>—</td>
                         <td>—</td>
                         <td>—</td>
+                        <td>{{ $user->sponsor?->name ?? '—' }}</td>
+                        <td>{{ $user->referral_code }}</td>
+                        <td>{{ $user->sponsored_users_count }}</td>
                         <td><x-aura-admin::status-badge :status="$statusLabel" /></td>
                         <td>
                             <div class="actions">
@@ -70,7 +76,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="8">
+                        <td colspan="11">
                             <div class="empty-state">
                                 <x-aura-admin::icon name="search" />
                                 <h3>Niciun utilizator găsit</h3>

@@ -18,6 +18,8 @@ use Illuminate\View\View;
 
 class AuthController extends Controller
 {
+    private const REGISTRATION_SPONSOR = 'registration.sponsor_id';
+
     public function showLogin(string $area = 'user'): View
     {
         return view('auth.login', ['demoRoute' => 'login', 'authArea' => $area]);
@@ -45,11 +47,34 @@ class AuthController extends Controller
             return back()->withErrors(['email' => 'Datele de autentificare nu sunt valide.'])->onlyInput('email');
         }
 
+        $request->session()->forget(self::REGISTRATION_SPONSOR);
+
         return redirect()->intended($area === 'admin' ? route('aura.admin.index') : route('aura.dashboard'));
+    }
+
+    public function showRegister(Request $request): View
+    {
+        $code = $request->query('ref');
+        if (! $request->session()->has(self::REGISTRATION_SPONSOR)
+            && is_string($code) && preg_match(User::REFERRAL_CODE_PATTERN, $code)) {
+            $sponsorId = User::where('referral_code', $code)->where('status', 'active')->value('id');
+            if ($sponsorId !== null) {
+                $request->session()->put(self::REGISTRATION_SPONSOR, $sponsorId);
+            }
+        }
+
+        return view('auth.register', [
+            'demoRoute' => 'register',
+            'hasReferral' => $request->session()->has(self::REGISTRATION_SPONSOR),
+        ]);
     }
 
     public function register(Request $request): RedirectResponse
     {
+        if (is_string($request->input('email'))) {
+            $request->merge(['email' => Str::lower($request->input('email'))]);
+        }
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'min:2', 'max:255'],
             'email' => ['required', 'email:rfc', 'max:255', 'unique:users,email'],
@@ -57,39 +82,31 @@ class AuthController extends Controller
             'terms' => ['accepted'],
         ]);
 
-        $user = DB::transaction(function () use ($validated): User {
+        $sponsorId = $request->session()->get(self::REGISTRATION_SPONSOR);
+        $user = DB::transaction(function () use ($validated, $sponsorId): User {
             $user = new User;
             $user->forceFill([
                 'name' => $validated['name'],
-                'email' => strtolower($validated['email']),
+                'email' => $validated['email'],
                 'password' => Hash::make($validated['password']),
                 'role' => 'user',
                 'status' => 'active',
-                'sponsor_id' => null,
-                'referral_code' => $this->uniqueReferralCode($validated['name']),
             ]);
+            if ($sponsorId !== null) {
+                $sponsor = User::whereKey($sponsorId)->where('status', 'active')->sharedLock()->first(['id']);
+                $user->sponsor()->associate($sponsor);
+            }
             $user->save();
             $user->profile()->create();
 
             return $user;
         });
 
+        $request->session()->forget(self::REGISTRATION_SPONSOR);
         Auth::login($user);
         $request->session()->regenerate();
 
         return redirect()->route('aura.dashboard');
-    }
-
-    private function uniqueReferralCode(string $name): string
-    {
-        $prefix = preg_replace('/[^A-Za-z0-9]/', '', Str::ascii(trim(explode(' ', $name)[0]))) ?: 'Aura';
-        $prefix = substr($prefix, 0, 12);
-
-        do {
-            $code = $prefix.Str::upper(Str::random(5));
-        } while (User::where('referral_code', $code)->exists());
-
-        return $code;
     }
 
     public function updateProfile(Request $request): RedirectResponse

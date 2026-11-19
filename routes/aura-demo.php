@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\MissionController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\ReferralController;
 use Illuminate\Support\Facades\Route;
 
 // UI-only preview routes. Replace with authenticated controllers before production.
@@ -27,7 +28,7 @@ Route::middleware(['auth', 'active'])->group(function (): void {
     Route::get('/mission-submissions/{submission}/evidence', [MissionController::class, 'evidence'])->name('aura.missions.evidence');
     Route::get('/achievements', fn () => view('achievements.index', ['demoRoute' => 'achievements']))->name('aura.achievements');
     Route::get('/wallet', fn () => view('wallet.index', ['demoRoute' => 'wallet']))->name('aura.wallet');
-    Route::get('/referrals', fn () => view('referrals.index', ['demoRoute' => 'referrals']))->name('aura.referrals');
+    Route::get('/referrals', ReferralController::class)->name('aura.referrals');
     Route::get('/integrations', fn () => view('integrations.index', ['demoRoute' => 'integrations']))->name('aura.integrations');
     Route::get('/subscriptions', fn () => view('subscriptions.index', ['demoRoute' => 'subscriptions']))->name('aura.subscriptions');
     Route::get('/profile', fn () => view('profile.index', ['demoRoute' => 'profile']))->name('aura.profile');
@@ -38,8 +39,10 @@ Route::middleware(['auth', 'active'])->group(function (): void {
 Route::get('/login', [AuthController::class, 'showLogin'])->name('aura.login');
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1')->name('aura.login.store');
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('aura.logout');
-Route::get('/register', fn () => view('auth.register', ['demoRoute' => 'register']))->name('aura.register');
-Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:3,1')->name('aura.register.store');
+Route::middleware('guest')->group(function (): void {
+    Route::get('/register', [AuthController::class, 'showRegister'])->block()->name('aura.register');
+    Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:3,1')->block()->name('aura.register.store');
+});
 Route::get('/forgot-password', [AuthController::class, 'showForgotPassword'])->name('aura.forgot-password');
 Route::post('/forgot-password', [AuthController::class, 'sendResetLink'])->middleware('throttle:3,1')->name('aura.password.email');
 Route::get('/reset-password/{token}', [AuthController::class, 'showResetPassword'])->name('aura.password.reset');

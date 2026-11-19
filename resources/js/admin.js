@@ -81,6 +81,7 @@ function globalSearch(q){const results=$a('#global-results');if(!q.trim()){resul
 function resetDemo(){dialog('Resetează datele demonstrative',`<p>Se elimină doar modificările demo din acest browser. Datele reale și interfața utilizatorului nu sunt afectate.</p><div class="form-actions">${btn('Resetează demo','onclick="localStorage.removeItem(\'aura-admin-demo-v1\');location.reload()"',true)}${btn('Renunță','onclick="closeDialog()"')}</div>`)}
 function projectAdminPath(fragment) {
     const [entity, id, mode] = fragment.split('/');
+    if (['referrals', 'referral-rules', 'conversions', 'links'].includes(entity)) return '/admin/users';
     if (!['opportunities','categories','eligibility','missions','mission-templates','verification','projects'].includes(entity)) return null;
     const suffix = id === 'create' || /^\d+$/.test(id || '') ? '/' + id : '';
     return '/admin/' + entity + suffix + (suffix && mode === 'edit' ? '/edit' : '');

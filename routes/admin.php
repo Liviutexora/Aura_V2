@@ -77,9 +77,10 @@ Route::prefix('admin')->name('aura.admin.')->middleware(['auth', 'active', 'supe
     Route::get('/transactions', static fn () => $loadAuraAdminDemo('transactions'))->name('transactions');
     Route::get('/commissions', static fn () => $loadAuraAdminDemo('commissions'))->name('commissions');
     Route::get('/payouts', static fn () => $loadAuraAdminDemo('payouts'))->name('payouts');
-    Route::get('/referrals', static fn () => $loadAuraAdminDemo('referrals'))->name('referrals');
-    Route::get('/conversions', static fn () => $loadAuraAdminDemo('conversions'))->name('conversions');
-    Route::get('/links', static fn () => $loadAuraAdminDemo('links'))->name('links');
+    foreach (['referrals', 'referral-rules', 'conversions', 'links'] as $section) {
+        Route::get($section.'/{legacyPath?}', static fn () => redirect()->route('aura.admin.users'))
+            ->where('legacyPath', '.*')->name($section);
+    }
     Route::get('/events', static fn () => $loadAuraAdminDemo('events'))->name('events');
     Route::get('/notifications', static fn () => $loadAuraAdminDemo('notifications'))->name('notifications');
     Route::get('/announcements', static fn () => $loadAuraAdminDemo('announcements'))->name('announcements');
@@ -93,7 +94,6 @@ Route::prefix('admin')->name('aura.admin.')->middleware(['auth', 'active', 'supe
     Route::get('/gamification', static fn () => $loadAuraAdminDemo('gamification'))->name('gamification');
     Route::get('/progress', static fn () => $loadAuraAdminDemo('progress'))->name('progress');
     Route::get('/wallet', static fn () => $loadAuraAdminDemo('wallet'))->name('wallet');
-    Route::get('/referral-rules', static fn () => $loadAuraAdminDemo('referral-rules'))->name('referral-rules');
     Route::get('/integrations', static fn () => $loadAuraAdminDemo('integrations'))->name('integrations');
     Route::get('/integration-config', static fn () => $loadAuraAdminDemo('integration-config'))->name('integration-config');
     Route::get('/delivery-log', static fn () => $loadAuraAdminDemo('delivery-log'))->name('delivery-log');

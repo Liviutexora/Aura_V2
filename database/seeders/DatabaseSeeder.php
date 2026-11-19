@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 class DatabaseSeeder extends Seeder
 {
@@ -27,22 +26,11 @@ class DatabaseSeeder extends Seeder
             $user->name ??= $definition['name'];
             $user->role ??= $definition['role'];
             $user->status ??= 'active';
-            $user->referral_code ??= $this->referralCode($user->name);
             if (! $user->exists) {
                 $user->password = Hash::make($definition['password']);
             }
             $user->save();
             $user->profile()->firstOrCreate([]);
         }
-    }
-
-    private function referralCode(string $name): string
-    {
-        $firstName = Str::of(explode(' ', trim($name))[0])->ascii()->replaceMatches('/[^A-Za-z0-9]/', '')->value() ?: 'Aura';
-        do {
-            $code = $firstName.Str::upper(Str::random(5));
-        } while (User::where('referral_code', $code)->exists());
-
-        return $code;
     }
 }

@@ -1,4 +1,49 @@
-@extends('layouts.app')
-@section('body')
-<header><a class="brand" href="#/dashboard"><span class="crown"><svg class="aura-svg aura-svg-crown" aria-hidden="true"><use href="{{ asset('assets/aura/icons.svg') }}#crown"></use></svg></span>Aura<span class="premium">Premium</span></a><nav><a href="#/dashboard" class=""><svg class="aura-svg aura-svg-sparkle" aria-hidden="true"><use href="{{ asset('assets/aura/icons.svg') }}#sparkle"></use></svg> Aura</a><a href="#/projects" class=""><svg class="aura-svg aura-svg-checklist" aria-hidden="true"><use href="{{ asset('assets/aura/icons.svg') }}#checklist"></use></svg> Proiecte</a><a href="#/missions" class=""><svg class="aura-svg aura-svg-folder" aria-hidden="true"><use href="{{ asset('assets/aura/icons.svg') }}#folder"></use></svg> Misiuni</a><a href="#/wallet" class=""><svg class="aura-svg aura-svg-wallet" aria-hidden="true"><use href="{{ asset('assets/aura/icons.svg') }}#wallet"></use></svg> Finanțe</a></nav><div><button aria-label="Notificări" onclick="info('Notificările tale','Misiunea Bonus bancar are termen pe 30 noiembrie. Ai o insignă nouă: Primul pas. Notificări demonstrative.')"><svg class="aura-svg aura-svg-bell" aria-hidden="true"><use href="{{ asset('assets/aura/icons.svg') }}#bell"></use></svg></button><a href="#/profile" class="avatar">L</a></div></header><main class="wrap"><nav class="subnav" aria-label="Navigare utilizator"><a href="#/dashboard" class="">Dashboard</a><a href="#/opportunities" class="">Oportunități</a><a href="#/missions" class="">Misiunile mele</a><a href="#/projects" class="">Proiectele mele</a><a href="#/achievements" class="">Realizări</a><a href="#/wallet" class="">Wallet</a><a href="#/referrals" class="active">Recomandări</a><a href="#/integrations" class="">Aplicațiile mele</a><a href="#/subscriptions" class="">Abonament</a><a href="#/profile" class="">Profil</a></nav><div class="heading"><div><div class="eyebrow">SPAȚIUL TĂU DE OPORTUNITĂȚI</div><h1>Centrul meu de recomandări</h1><p>Recomandă cu încredere. Urmărește fiecare pas.</p></div><span class="demo">DEMO INTERACTIV</span></div><div class="mini-stats"><div class="card"><small>Clickuri</small><b>124</b></div><div class="card"><small>Conversii validate</small><b>8</b></div><div class="card"><small>Comisioane confirmate</small><b>430 lei</b></div></div><div class="catalog"><article class="card"><span class="tile pink">T</span><h3>Texora</h3><p>30% comision recurent</p><label>Link demonstrativ</label><input readonly value="https://example.com/demo/texora/liviu" aria-label="Link demo Texora"><button class="btn secondary" onclick="copyLink(this.previousElementSibling.value)">Copiază linkul ⧉</button><button onclick="shareDemo('Texora')">Distribuie ↗</button><div class="row"><small>31 clickuri · 5 înscrieri · 2 conversii</small></div><button onclick="info('Statistici Texora','Date demo: 31 clickuri, 5 înscrieri și 2 conversii validate. Comisioanele se calculează și se validează la partener. Termeni: recomandări eligibile, fără autorecomandări.')">Statistici și termeni ↗</button></article><article class="card"><span class="tile pink"><svg class="aura-svg aura-svg-folder" aria-hidden="true"><use href="{{ asset('assets/aura/icons.svg') }}#folder"></use></svg></span><h3>Texora Studio</h3><p>150 lei / client validat</p><label>Link demonstrativ</label><input readonly value="https://example.com/demo/texora-studio/liviu" aria-label="Link demo Texora Studio"><button class="btn secondary" onclick="copyLink(this.previousElementSibling.value)">Copiază linkul ⧉</button><button onclick="shareDemo('Texora Studio')">Distribuie ↗</button><div class="row"><small>31 clickuri · 5 înscrieri · 2 conversii</small></div><button onclick="info('Statistici Texora Studio','Date demo: 31 clickuri, 5 înscrieri și 2 conversii validate. Comisioanele se calculează și se validează la partener. Termeni: recomandări eligibile, fără autorecomandări.')">Statistici și termeni ↗</button></article><article class="card"><span class="tile pink"><svg class="aura-svg aura-svg-wings" aria-hidden="true"><use href="{{ asset('assets/aura/icons.svg') }}#wings"></use></svg></span><h3>Angels Legacy</h3><p>10% comision demonstrativ</p><label>Link demonstrativ</label><input readonly value="https://example.com/demo/angels-legacy/liviu" aria-label="Link demo Angels Legacy"><button class="btn secondary" onclick="copyLink(this.previousElementSibling.value)">Copiază linkul ⧉</button><button onclick="shareDemo('Angels Legacy')">Distribuie ↗</button><div class="row"><small>31 clickuri · 5 înscrieri · 2 conversii</small></div><button onclick="info('Statistici Angels Legacy','Date demo: 31 clickuri, 5 înscrieri și 2 conversii validate. Comisioanele se calculează și se validează la partener. Termeni: recomandări eligibile, fără autorecomandări.')">Statistici și termeni ↗</button></article><article class="card"><span class="tile pink"><svg class="aura-svg aura-svg-infinity" aria-hidden="true"><use href="{{ asset('assets/aura/icons.svg') }}#infinity"></use></svg></span><h3>Loyalty Club</h3><p>45 lei / conversie validată</p><label>Link demonstrativ</label><input readonly value="https://example.com/demo/loyalty-club/liviu" aria-label="Link demo Loyalty Club"><button class="btn secondary" onclick="copyLink(this.previousElementSibling.value)">Copiază linkul ⧉</button><button onclick="shareDemo('Loyalty Club')">Distribuie ↗</button><div class="row"><small>31 clickuri · 5 înscrieri · 2 conversii</small></div><button onclick="info('Statistici Loyalty Club','Date demo: 31 clickuri, 5 înscrieri și 2 conversii validate. Comisioanele se calculează și se validează la partener. Termeni: recomandări eligibile, fără autorecomandări.')">Statistici și termeni ↗</button></article></div><footer class="footer"><span><svg class="aura-svg aura-svg-crown" aria-hidden="true"><use href="{{ asset('assets/aura/icons.svg') }}#crown"></use></svg> Aura · Descoperă oportunități. Câștigă mai mult.</span><span>Date demonstrative · Câștigurile sunt condiționate și nu sunt garantate.</span></footer></main><nav class="mobile-nav"><a href="#/dashboard" class=""><span><svg class="aura-svg aura-svg-sparkle" aria-hidden="true"><use href="{{ asset('assets/aura/icons.svg') }}#sparkle"></use></svg></span>Dashboard</a><a href="#/opportunities" class=""><span><svg class="aura-svg aura-svg-target" aria-hidden="true"><use href="{{ asset('assets/aura/icons.svg') }}#target"></use></svg></span>Oportunități</a><a href="#/missions" class=""><span><svg class="aura-svg aura-svg-checklist" aria-hidden="true"><use href="{{ asset('assets/aura/icons.svg') }}#checklist"></use></svg></span>Misiunile mele</a><a href="#/wallet" class=""><span><svg class="aura-svg aura-svg-wallet" aria-hidden="true"><use href="{{ asset('assets/aura/icons.svg') }}#wallet"></use></svg></span>Wallet</a><a href="#/profile" class=""><span><svg class="aura-svg aura-svg-user" aria-hidden="true"><use href="{{ asset('assets/aura/icons.svg') }}#user"></use></svg></span>Profil</a></nav>
+@extends('layouts.project')
+@section('project-content')
+<div class="heading">
+    <div>
+        <div class="eyebrow">SPAȚIUL TĂU DE OPORTUNITĂȚI</div>
+        <h1>Centrul meu de recomandări</h1>
+        <p>Invită persoane în AURA și urmărește înscrierile prin linkul tău.</p>
+    </div>
+</div>
+
+<div class="mini-stats">
+    <div class="card"><small>Recomandări directe</small><b>{{ $referrals->total() }}</b></div>
+    <div class="card"><small>Conturi active</small><b>{{ $activeCount }}</b></div>
+    <div class="card"><small>Conturi inactive</small><b>{{ $referrals->total() - $activeCount }}</b></div>
+</div>
+
+<div class="split">
+    <article class="card">
+        <span class="tile pink" aria-hidden="true">↗</span>
+        <h2 id="referral-link-label">Linkul tău personal de recomandare</h2>
+        @if($referralUrl)
+            <input id="referral-link" type="url" readonly aria-labelledby="referral-link-label" value="{{ $referralUrl }}">
+            <div class="actions">
+                <button id="referral-copy" class="btn secondary" type="button">Copiază linkul ⧉</button>
+                <button id="referral-share" type="button">Distribuie ↗</button>
+            </div>
+        @else
+            <p>Linkul va fi disponibil după actualizarea codului de recomandare.</p>
+        @endif
+    </article>
+
+    <section class="card">
+        <h2>Persoane recomandate direct</h2>
+        @forelse($referrals as $referral)
+            <div class="row">
+                <span class="tile" aria-hidden="true"><svg class="aura-svg aura-svg-user"><use href="{{ asset('assets/aura/icons.svg') }}#user"></use></svg></span>
+                <div class="body">
+                    <b>{{ $referral->referralDisplayName() }}</b>
+                    <small>Înregistrare · {{ $referral->created_at?->format('d.m.Y') ?? '—' }}</small>
+                </div>
+                <span @class(['status', 'pending' => ! $referral->isActive()])>{{ $referral->isActive() ? 'Activ' : 'Inactiv' }}</span>
+            </div>
+        @empty
+            <p>Nu ai încă recomandări directe.</p>
+        @endforelse
+        @include('projects.pagination', ['items' => $referrals])
+    </section>
+</div>
 @endsection

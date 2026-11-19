@@ -23,6 +23,25 @@ class User extends Authenticatable implements CanResetPassword
     /** @use HasFactory<UserFactory> */
     use CanResetPasswordTrait, HasFactory, Notifiable;
 
+    public const REFERRAL_CODE_PATTERN = '/\A[0-9a-f]{32}\z/';
+
+    protected static function booted(): void
+    {
+        static::creating(function (self $user): void {
+            if ($user->getKey() !== null && (string) $user->getKey() === (string) $user->sponsor_id) {
+                throw new LogicException('Un cont nu poate fi propriul sponsor.');
+            }
+
+            $user->referral_code ??= bin2hex(random_bytes(16));
+        });
+
+        static::updating(function (self $user): void {
+            if ($user->isDirty('sponsor_id')) {
+                throw new LogicException('Sponsorul poate fi atribuit numai la înregistrare.');
+            }
+        });
+    }
+
     public function profile(): HasOne
     {
         return $this->hasOne(UserProfile::class);
@@ -48,27 +67,17 @@ class User extends Authenticatable implements CanResetPassword
         return $this->status === 'active';
     }
 
+    public function referralDisplayName(): string
+    {
+        $parts = preg_split('/\s+/u', trim($this->name), 2);
+        $firstName = $parts[0] ?? '';
+
+        return preg_match("/\\A\\p{L}[\\p{L}\\p{M}'’-]*\\z/u", $firstName) ? $firstName : 'Membru AURA';
+    }
+
     public function isSuperAdmin(): bool
     {
         return $this->role === 'super_admin' && $this->isActive();
-    }
-
-    public function assignSponsor(?self $sponsor): void
-    {
-        if ($sponsor?->is($this)) {
-            throw new LogicException('A user cannot sponsor itself.');
-        }
-
-        $visited = [];
-        for ($cursor = $sponsor; $cursor; $cursor = $cursor->sponsor) {
-            if (isset($visited[$cursor->getKey()]) || $cursor->is($this)) {
-                throw new LogicException('Circular sponsor relationships are not allowed.');
-            }
-            $visited[$cursor->getKey()] = true;
-        }
-
-        $this->sponsor()->associate($sponsor);
-        $this->save();
     }
 
     /**

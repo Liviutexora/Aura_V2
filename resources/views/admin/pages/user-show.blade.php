@@ -47,6 +47,7 @@
         <div class="detail-item"><small>Email verificat</small><b>{{ $user->email_verified_at?->format('d.m.Y H:i') ?? '—' }}</b></div>
         <div class="detail-item"><small>Cod de recomandare</small><b>{{ $user->referral_code ?: '—' }}</b></div>
         <div class="detail-item"><small>Sponsor</small><b>{{ $user->sponsor?->name ?? '—' }}</b></div>
+        <div class="detail-item"><small>Recomandări directe</small><b>{{ $user->sponsored_users_count }}</b></div>
         <div class="detail-item"><small>Telefon</small><b>{{ $user->profile?->phone ?: '—' }}</b></div>
         <div class="detail-item"><small>Limbă</small><b>{{ $user->profile?->locale ?: '—' }}</b></div>
         <div class="detail-item"><small>Fus orar</small><b>{{ $user->profile?->timezone ?: '—' }}</b></div>
