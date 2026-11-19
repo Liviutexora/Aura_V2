@@ -1,0 +1,1 @@
+<input type="hidden" name="earning_key" value="{{ $earningKey }}"><label>Sumă primită<input type="number" name="amount" min="0.01" step="0.01" value="{{ $receivedAmount ?? '' }}" @required($required)></label><label>Monedă<input name="currency" value="{{ $currency ?? 'RON' }}" maxlength="3" pattern="[A-Z]{3}"></label>

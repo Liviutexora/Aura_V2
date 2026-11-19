@@ -1,0 +1,132 @@
+[
+  [
+    "Prezentare",
+    [
+      [
+        "dashboard",
+        "Dashboard",
+        "home"
+      ],
+      [
+        "analytics",
+        "Rapoarte & Analize",
+        "chart"
+      ]
+    ]
+  ],
+  [
+    "Administrare",
+    [
+      [
+        "users",
+        "Utilizatori",
+        "users"
+      ],
+      [
+        "subscriptions",
+        "Abonamente utilizatori",
+        "crown"
+      ],
+      [
+        "activity",
+        "Activitate utilizatori",
+        "activity"
+      ],
+      [
+        "opportunities",
+        "Oportunități",
+        "target"
+      ],
+      [
+        "categories",
+        "Categorii & eligibilitate",
+        "folder"
+      ],
+      [
+        "missions",
+        "Misiuni & șabloane",
+        "game"
+      ],
+      [
+        "verification",
+        "Verificări misiuni",
+        "check"
+      ],
+      [
+        "gamification",
+        "XP & Gamification",
+        "star"
+      ]
+    ]
+  ],
+  [
+    "Financiar & ecosistem",
+    [
+      [
+        "wallet",
+        "Comisioane & Wallet",
+        "coins"
+      ],
+      [
+        "transactions",
+        "Tranzacții",
+        "wallet"
+      ],
+      [
+        "payouts",
+        "Cereri de plată",
+        "arrow"
+      ],
+      [
+        "referrals",
+        "Programe de recomandări",
+        "link"
+      ],
+      [
+        "conversions",
+        "Conversii & linkuri",
+        "target"
+      ],
+      [
+        "integrations",
+        "Integrări aplicații",
+        "link"
+      ],
+      [
+        "events",
+        "Evenimente & sincronizări",
+        "activity"
+      ]
+    ]
+  ],
+  [
+    "Platformă",
+    [
+      [
+        "notifications",
+        "Comunicații",
+        "bell"
+      ],
+      [
+        "plans",
+        "Planuri abonament",
+        "crown"
+      ],
+      [
+        "roles",
+        "Roluri & permisiuni",
+        "shield"
+      ],
+      [
+        "audit",
+        "Jurnal de audit",
+        "list"
+      ],
+      [
+        "settings",
+        "Setări",
+        "settings"
+      ]
+    ]
+  ]
+]

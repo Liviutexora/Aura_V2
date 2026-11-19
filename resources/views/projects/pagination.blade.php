@@ -1,0 +1,1 @@
+@if($items->hasPages())<div class="pagination"><span>{{ $items->total() }} rezultate · Pagina {{ $items->currentPage() }} / {{ $items->lastPage() }}</span><span>@if($items->previousPageUrl())<a href="{{ $items->previousPageUrl() }}">‹ Înapoi</a>@endif @if($items->nextPageUrl())<a href="{{ $items->nextPageUrl() }}">Înainte ›</a>@endif</span></div>@endif

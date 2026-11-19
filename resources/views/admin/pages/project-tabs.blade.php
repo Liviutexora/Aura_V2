@@ -1,0 +1,2 @@
+@php($tabs = match($entity) { 'categories','eligibility'=>['categories','eligibility'], 'missions','mission-templates','verification','projects'=>['missions','mission-templates','verification','projects'], default=>[] })
+@if($tabs)<div class="tabs">@foreach($tabs as $tab)<a href="{{ route('aura.admin.'.$tab) }}" @class(['active'=>$entity===$tab])>{{ \App\Services\CatalogEditor::TITLES[$tab] }}</a>@endforeach</div>@endif
