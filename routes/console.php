@@ -27,3 +27,5 @@ Schedule::call(function (): void {
             }
         });
 })->name('mission-reminders')->everyMinute();
+
+Schedule::command('auth:clear-resets')->everyFifteenMinutes();

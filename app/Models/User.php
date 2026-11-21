@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Auth\Passwords\CanResetPassword as CanResetPasswordTrait;
 use Illuminate\Contracts\Auth\CanResetPassword;
@@ -17,8 +17,8 @@ use Illuminate\Notifications\Notifiable;
 use LogicException;
 
 #[Fillable(['name', 'email', 'password'])]
-#[Hidden(['password', 'remember_token'])]
-class User extends Authenticatable implements CanResetPassword
+#[Hidden(['password', 'remember_token', 'email_code_digest', 'login_failures', 'login_locked_until'])]
+class User extends Authenticatable implements CanResetPassword, MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
     use CanResetPasswordTrait, HasFactory, Notifiable;
@@ -89,6 +89,10 @@ class User extends Authenticatable implements CanResetPassword
     {
         return [
             'email_verified_at' => 'datetime',
+            'email_code_sent_at' => 'datetime',
+            'email_code_failures' => 'integer',
+            'login_failures' => 'integer',
+            'login_locked_until' => 'datetime',
             'password' => 'hashed',
         ];
     }

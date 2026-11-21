@@ -3,22 +3,46 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Notifications\ResetAccountPassword;
+use App\Services\AccountMail;
+use App\Services\EmailVerificationCodes;
+use App\Services\LoginAttempts;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Password as PasswordRule;
+use Closure;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class AuthController extends Controller
 {
     private const REGISTRATION_SPONSOR = 'registration.sponsor_id';
+
+    private const FORM_MESSAGES = [
+        'email.required' => 'Introdu adresa de email.',
+        'email.email' => 'Introdu o adresă de email validă.',
+        'email.max' => 'Adresa de email este prea lungă.',
+        'name.required' => 'Introdu numele complet.',
+        'name.string' => 'Introdu un nume valid.',
+        'name.min' => 'Numele trebuie să aibă cel puțin 2 caractere.',
+        'name.max' => 'Numele poate avea maximum 255 de caractere.',
+        'password.required' => 'Introdu parola.',
+        'password.string' => 'Introdu o parolă validă.',
+        'password.min' => 'Parola trebuie să aibă cel puțin 8 caractere.',
+        'password.confirmed' => 'Confirmarea parolei nu corespunde.',
+        'terms.accepted' => 'Acceptă termenii și politica de confidențialitate pentru a continua.',
+        'current_password.required' => 'Introdu parola curentă.',
+        'token.*' => 'Linkul este invalid sau a expirat. Solicită un link nou.',
+    ];
+
+    public function __construct(private EmailVerificationCodes $codes) {}
 
     public function showLogin(string $area = 'user'): View
     {
@@ -28,26 +52,22 @@ class AuthController extends Controller
     public function login(Request $request, string $area = 'user'): RedirectResponse
     {
         $credentials = $request->validate([
-            'email' => ['required', 'email:rfc'],
+            'email' => ['bail', 'required', 'email:rfc', 'max:255'],
             'password' => ['required', 'string'],
-        ]);
+        ], self::FORM_MESSAGES);
 
         $email = strtolower($credentials['email']);
-        $requiredRole = $area === 'admin' ? 'super_admin' : 'user';
-        $authenticated = Auth::attemptWhen(
-            [
-                static fn (Builder $query): Builder => $query->whereRaw('LOWER(email) = ?', [$email]),
-                'password' => $credentials['password'],
-            ],
-            static fn (User $user): bool => $user->isActive() && $user->role === $requiredRole,
-            $request->boolean('remember'),
-        );
-
-        if (! $authenticated) {
-            return back()->withErrors(['email' => 'Datele de autentificare nu sunt valide.'])->onlyInput('email');
+        $role = $area === 'admin' ? 'super_admin' : 'user';
+        $error = app(LoginAttempts::class)->authenticate($request, $email, $credentials['password'], $role);
+        if ($error !== null) {
+            return back()->withErrors(['email' => $error])->onlyInput('email');
         }
 
         $request->session()->forget(self::REGISTRATION_SPONSOR);
+
+        if (! $request->user()->hasVerifiedEmail()) {
+            return redirect()->route('aura.verify-email')->with('status', $this->codes->issue($request->user()));
+        }
 
         return redirect()->intended($area === 'admin' ? route('aura.admin.index') : route('aura.dashboard'));
     }
@@ -77,10 +97,10 @@ class AuthController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'min:2', 'max:255'],
-            'email' => ['required', 'email:rfc', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'confirmed', PasswordRule::min(8)],
+            'email' => ['bail', 'required', 'email:rfc', 'max:255', $this->uniqueEmail()],
+            'password' => ['required', 'string', 'confirmed', 'min:8'],
             'terms' => ['accepted'],
-        ]);
+        ], self::FORM_MESSAGES);
 
         $sponsorId = $request->session()->get(self::REGISTRATION_SPONSOR);
         $user = DB::transaction(function () use ($validated, $sponsorId): User {
@@ -106,56 +126,61 @@ class AuthController extends Controller
         Auth::login($user);
         $request->session()->regenerate();
 
-        return redirect()->route('aura.dashboard');
+        return redirect()->route('aura.verify-email')->with('status', $this->codes->issue($user));
     }
 
     public function updateProfile(Request $request): RedirectResponse
     {
         $user = $request->user();
-        $normalizedEmail = Str::lower($request->string('email')->toString());
+        $inputEmail = $request->input('email');
+        $normalizedEmail = is_string($inputEmail) ? Str::lower($inputEmail) : '';
         $emailChanged = $normalizedEmail !== Str::lower($user->email);
 
         $request->merge(['email' => $normalizedEmail]);
 
         $validated = $request->validateWithBag('profileUpdate', [
             'name' => ['required', 'string', 'min:2', 'max:255'],
-            'email' => ['required', 'email:rfc', 'max:255', Rule::unique('users', 'email')->ignore($user->getKey())],
+            'email' => ['bail', 'required', 'email:rfc', 'max:255', $this->uniqueEmail($user)],
             'current_password' => $emailChanged
                 ? ['required', 'string', 'current_password:web']
                 : ['exclude'],
         ], [
-            'email.unique' => 'Adresa de email este deja utilizată.',
             'current_password.required' => 'Introdu parola curentă pentru a schimba adresa de email.',
             'current_password.current_password' => 'Parola curentă este incorectă.',
-        ]);
-
-        $attributes = [
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-        ];
+        ] + self::FORM_MESSAGES);
 
         if ($emailChanged) {
-            $attributes['email_verified_at'] = null;
+            DB::transaction(function () use ($user, $validated): void {
+                $current = User::query()->lockForUpdate()->findOrFail($user->getKey());
+                abort_unless($current->isActive() && $current->hasVerifiedEmail(), 403);
+                if (! Hash::check($validated['current_password'], $current->getAuthPassword())) {
+                    throw ValidationException::withMessages(['current_password' => 'Parola curentă este incorectă.'])->errorBag('profileUpdate');
+                }
+                Password::deleteToken($current);
+                $current->forceFill([
+                    'name' => $validated['name'], 'email' => $validated['email'],
+                    'email_verified_at' => null, 'email_code_digest' => null,
+                    'email_code_sent_at' => null, 'email_code_failures' => 0,
+                ])->save();
+                Password::deleteToken($current);
+            });
+
+            return redirect()->route('aura.verify-email')->with('status', $this->codes->issue($user));
         }
 
-        $user->forceFill($attributes)->save();
+        $user->update(['name' => $validated['name']]);
 
-        return back()->with(
-            'profile_status',
-            $emailChanged
-                ? 'Datele contului au fost actualizate. Noua adresă de email este neverificată.'
-                : 'Datele contului au fost actualizate.',
-        );
+        return back()->with('profile_status', 'Datele contului au fost actualizate.');
     }
 
     public function updatePassword(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'current_password' => ['required', 'current_password:web'],
-            'password' => ['required', 'confirmed', PasswordRule::min(8)],
+            'password' => ['required', 'string', 'confirmed', 'min:8'],
         ], [
             'current_password.current_password' => 'Parola actuală este incorectă.',
-        ]);
+        ] + self::FORM_MESSAGES);
 
         $request->user()->forceFill([
             'password' => Hash::make($validated['password']),
@@ -180,32 +205,79 @@ class AuthController extends Controller
 
     public function sendResetLink(Request $request, string $area = 'user'): RedirectResponse
     {
-        $request->validate(['email' => ['required', 'email:rfc']]);
-        Password::sendResetLink($request->only('email'));
+        $data = $request->validate(['email' => ['bail', 'required', 'email:rfc', 'max:255']], self::FORM_MESSAGES);
+        $credentials = $this->resetCredentials($data['email'], $area);
+        DB::transaction(function () use ($credentials): void {
+            Password::sendResetLink($credentials, function (User $user, string $token): void {
+                DB::afterCommit(static function () use ($user, $token): void {
+                    \Illuminate\Support\defer(static fn () => app(AccountMail::class)->send($user, new ResetAccountPassword($token)));
+                });
+            });
+        });
 
         return back()->with('status', 'Dacă adresa este înregistrată, vei primi instrucțiuni pentru resetarea parolei.');
     }
 
-    public function showResetPassword(Request $request): View
+    public function showResetPassword(Request $request): Response
     {
-        return view('auth.reset-password', ['demoRoute' => 'reset-password', 'token' => $request->route('token'), 'email' => $request->query('email')]);
+        $email = $request->query('email');
+
+        return response()->view('auth.reset-password', [
+            'demoRoute' => 'reset-password',
+            'token' => $request->route('token'),
+            'email' => is_string($email) ? $email : '',
+            'authArea' => $request->query('area') === 'admin' ? 'admin' : 'user',
+        ])->withHeaders(['Referrer-Policy' => 'no-referrer', 'Cache-Control' => 'no-store, private']);
     }
 
-    public function resetPassword(Request $request): RedirectResponse
+    public function resetPassword(Request $request, string $area = 'user'): RedirectResponse
     {
         $validated = $request->validate([
-            'token' => ['required'],
-            'email' => ['required', 'email:rfc'],
-            'password' => ['required', 'confirmed', PasswordRule::min(8)],
-        ]);
+            'token' => ['required', 'string', 'max:2048'],
+            'email' => ['bail', 'required', 'email:rfc'],
+            'password' => ['required', 'string', 'confirmed', 'min:8'],
+        ], self::FORM_MESSAGES);
 
-        $status = Password::reset($validated, function (User $user, string $password): void {
-            $user->forceFill(['password' => Hash::make($password), 'remember_token' => Str::random(60)])->save();
-            event(new PasswordReset($user));
-        });
+        $credentials = $this->resetCredentials($validated['email'], $area);
+        $link = ResetAccountPassword::readLinkToken($validated['token'], $credentials['role']);
+        $status = Password::INVALID_TOKEN;
+        if ($link !== null) {
+            $credentials += $link + ['password' => $validated['password']];
+            $status = DB::transaction(fn () => Password::reset($credentials, function (User $user, string $password): void {
+                $user->forceFill(['password' => Hash::make($password), 'remember_token' => Str::random(60)])->save();
+                event(new PasswordReset($user));
+            }));
+        }
 
         return $status === Password::PASSWORD_RESET
-            ? redirect()->route('aura.login')->with('status', 'Parola a fost schimbată.')->with('authArea', 'user')
-            : back()->withErrors(['email' => __($status)]);
+            ? redirect()->route($area === 'admin' ? 'aura.admin.login' : 'aura.login')->with('status', 'Parola a fost schimbată. Te poți autentifica.')
+            : redirect()->route($area === 'admin' ? 'aura.admin.password.request' : 'aura.forgot-password')
+                ->withErrors(['email' => 'Linkul este invalid sau a expirat. Solicită un link nou.']);
+    }
+
+    private function uniqueEmail(?User $ignore = null): Closure
+    {
+        return static function (string $attribute, mixed $value, Closure $fail) use ($ignore): void {
+            $query = User::whereRaw('LOWER(email) = ?', [Str::lower($value)]);
+            if ($ignore) {
+                $query->whereKeyNot($ignore->getKey());
+            }
+            if ($query->exists()) {
+                $fail('Adresa de email este deja utilizată.');
+            }
+        };
+    }
+
+    /** @return array{0: \Closure, status: string, role: string} */
+    private function resetCredentials(string $email, string $area): array
+    {
+        $email = Str::lower($email);
+        $id = User::whereRaw('LOWER(email) = ?', [$email])->value('id');
+
+        return [
+            static fn (Builder $query): Builder => $query->whereKey($id)->whereRaw('LOWER(email) = ?', [$email])->lockForUpdate(),
+            'status' => 'active',
+            'role' => $area === 'admin' ? 'super_admin' : 'user',
+        ];
     }
 }

@@ -89,7 +89,6 @@ class ProfileUpdateSecurityTest extends TestCase
         $user = $this->createUser(
             email: 'correct-password@example.test',
             referralCode: 'CORRECTPASSWORD',
-            attributes: ['email_verified_at' => null],
         );
 
         $response = $this->actingAs($user)
@@ -100,11 +99,8 @@ class ProfileUpdateSecurityTest extends TestCase
                 'current_password' => self::CURRENT_PASSWORD,
             ]);
 
-        $response->assertRedirect(route('aura.settings'));
-        $response->assertSessionHas(
-            'profile_status',
-            'Datele contului au fost actualizate. Noua adresă de email este neverificată.',
-        );
+        $response->assertRedirectToRoute('aura.verify-email');
+        $response->assertSessionHas('status', 'Am trimis codul de verificare la adresa ta de email.');
         $this->assertSame('new-correct-password@example.test', $user->fresh()->email);
         $this->assertAuthenticatedAs($user);
         $this->assertTrue(Hash::check(self::CURRENT_PASSWORD, $user->fresh()->getAuthPassword()));
@@ -125,7 +121,7 @@ class ProfileUpdateSecurityTest extends TestCase
                 'current_password' => self::CURRENT_PASSWORD,
             ]);
 
-        $response->assertRedirect(route('aura.settings'));
+        $response->assertRedirectToRoute('aura.verify-email');
         $this->assertNull($user->fresh()->email_verified_at);
     }
 

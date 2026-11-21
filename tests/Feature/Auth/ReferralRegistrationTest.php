@@ -3,6 +3,8 @@
 namespace Tests\Feature\Auth;
 
 use App\Models\User;
+use App\Notifications\VerifyEmailCode;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\TestResponse;
 use LogicException;
@@ -15,6 +17,7 @@ class ReferralRegistrationTest extends TestCase
 
     public function test_first_valid_referral_survives_reload_validation_and_another_link_then_starts_a_second_generation(): void
     {
+        Notification::fake();
         $first = User::factory()->create();
         $other = User::factory()->create();
         $this->keepSession($this->get('/register?ref=invalid')->assertOk());
@@ -25,7 +28,7 @@ class ReferralRegistrationTest extends TestCase
 
         $response = $this->post('/register', $this->registration('alexandra@example.test') + [
             'sponsor_id' => $other->id, 'ref' => $other->referral_code, 'email_verified_at' => now(),
-        ])->assertRedirectToRoute('aura.dashboard');
+        ])->assertRedirectToRoute('aura.verify-email');
         $alexandra = User::where('email', 'alexandra@example.test')->firstOrFail();
         $this->assertAuthenticatedAs($alexandra);
         $this->assertEquals($first->id, $alexandra->sponsor_id);
@@ -35,11 +38,13 @@ class ReferralRegistrationTest extends TestCase
         $this->assertDatabaseHas('user_profiles', ['user_id' => $alexandra->id]);
 
         $this->keepSession($response);
+        $code = Notification::sent($alexandra, VerifyEmailCode::class)->sole()->code;
+        $this->keepSession($this->post('/verify-email', ['code' => $code])->assertSessionHasNoErrors());
         $this->get('/referrals')->assertOk()->assertSee('/register?ref='.$alexandra->referral_code)
             ->assertSee('Nu ai încă recomandări directe.');
         $this->keepSession($this->post('/logout'));
         $this->get('/register?ref='.$alexandra->referral_code)->assertOk();
-        $this->post('/register', $this->registration('maria@example.test'))->assertRedirectToRoute('aura.dashboard');
+        $this->post('/register', $this->registration('maria@example.test'))->assertRedirectToRoute('aura.verify-email');
         $this->assertDatabaseHas('users', ['email' => 'maria@example.test', 'sponsor_id' => $alexandra->id]);
         $this->assertEquals(1, $first->sponsoredUsers()->count());
     }
@@ -54,7 +59,7 @@ class ReferralRegistrationTest extends TestCase
         $this->keepSession($this->get('/register'.$query)->assertOk());
         $this->post('/register?ref='.$other->referral_code, $this->registration('new@example.test') + [
             'sponsor_id' => $other->id, 'ref' => $other->referral_code, 'referral_code' => $other->referral_code,
-        ])->assertRedirectToRoute('aura.dashboard');
+        ])->assertRedirectToRoute('aura.verify-email');
         $this->assertDatabaseHas('users', ['email' => 'new@example.test', 'sponsor_id' => null, 'email_verified_at' => null]);
     }
 
@@ -66,7 +71,7 @@ class ReferralRegistrationTest extends TestCase
         $this->get('/register?ref='.$active->referral_code)->assertOk();
         $this->get('/register')->assertSessionHas('registration.sponsor_id', $active->id);
         $active->forceFill(['status' => 'suspended'])->save();
-        $this->post('/register', $this->registration('new@example.test'))->assertRedirectToRoute('aura.dashboard');
+        $this->post('/register', $this->registration('new@example.test'))->assertRedirectToRoute('aura.verify-email');
         $this->assertDatabaseHas('users', ['email' => 'new@example.test', 'sponsor_id' => null]);
     }
 

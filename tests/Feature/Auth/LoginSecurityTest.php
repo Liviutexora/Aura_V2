@@ -129,7 +129,7 @@ class LoginSecurityTest extends TestCase
         $this->freezeTime();
         for ($attempt = 1; $attempt <= 5; $attempt++) {
             $this->post(route($loginRoute), ['email' => $user->email, 'password' => 'incorrect-password'])
-                ->assertSessionHasErrors(['email' => self::LOGIN_ERROR]);
+                ->assertSessionHasErrors('email');
         }
 
         $response = $this->post(route($loginRoute), ['email' => $user->email, 'password' => self::PASSWORD]);

@@ -104,8 +104,12 @@ class ProjectController extends Controller
         return back()->with('status', 'Încasarea a fost înregistrată.');
     }
 
-    public function landing(Request $request): View
+    public function landing(Request $request): View|RedirectResponse
     {
+        if ($request->user()?->isActive() && ! $request->user()->hasVerifiedEmail()) {
+            return redirect()->route('aura.verify-email');
+        }
+
         $data = $request->user()?->isActive() ? $this->dashboardData($request) : [
             'projects' => collect(), 'currentMission' => null, 'completedCount' => 0, 'missionCount' => 0, 'totals' => collect(),
             'offers' => $this->catalog->published()->orderByDesc('is_featured')->latest('id')->limit(3)->get(),

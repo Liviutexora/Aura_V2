@@ -35,11 +35,14 @@ $loadAuraAdminDemo = static function (string $page, ?string $recordId = null, ?s
 };
 
 Route::get('/admin/login', fn (AuthController $controller) => $controller->showLogin('admin'))->name('aura.admin.login');
-Route::post('/admin/login', fn (Request $request, AuthController $controller) => $controller->login($request, 'admin'))->middleware('throttle:5,1')->name('aura.admin.login.store');
+Route::post('/admin/login', fn (Request $request, AuthController $controller) => $controller->login($request, 'admin'))->middleware('throttle:5,1,account-login:')->name('aura.admin.login.store');
 Route::get('/admin/forgot-password', fn (AuthController $controller) => $controller->showForgotPassword('admin'))->name('aura.admin.password.request');
-Route::post('/admin/forgot-password', fn (Request $request, AuthController $controller) => $controller->sendResetLink($request, 'admin'))->middleware('throttle:3,1')->name('aura.admin.password.email');
+Route::post('/admin/forgot-password', fn (Request $request, AuthController $controller) => $controller->sendResetLink($request, 'admin'))->middleware('throttle:3,1,password-request:')->name('aura.admin.password.email');
 
-Route::prefix('admin')->name('aura.admin.')->middleware(['auth', 'active', 'super_admin'])->group(static function () use ($loadAuraAdminDemo) {
+Route::post('/admin/reset-password', fn (Request $request, AuthController $controller) => $controller->resetPassword($request, 'admin'))
+    ->middleware('throttle:3,1,password-update:')->name('aura.admin.password.update');
+
+Route::prefix('admin')->name('aura.admin.')->middleware(['auth', 'active', 'super_admin', 'verified:aura.verify-email'])->group(static function () use ($loadAuraAdminDemo) {
     Route::get('/', static fn () => $loadAuraAdminDemo('dashboard'))->name('index');
     Route::get('/users', [UserController::class, 'index'])->name('users');
     Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');

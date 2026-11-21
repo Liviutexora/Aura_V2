@@ -25,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
             : route('aura.login'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->dontFlash(['code', 'token', 'answer']);
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
