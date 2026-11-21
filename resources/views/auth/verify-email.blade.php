@@ -14,7 +14,7 @@
             <p id="code-expiry" data-seconds="{{ $expiresIn }}">Codul este valabil 10 minute de la emitere.</p>
             <button class="btn">Verifică emailul</button>
         </form>
-        <form method="POST" action="{{ route('aura.verify-email.resend') }}">
+        <form method="POST" action="{{ route('aura.verify-email.resend') }}" style="margin-top:20px">
             @csrf
             <button class="btn secondary" id="resend-code" data-seconds="{{ $resendIn }}">Retrimite codul</button>
         </form>
