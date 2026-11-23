@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Models\ProjectEvent;
 use App\Models\ProjectMission;
+use App\Models\User;
 use App\Services\OpportunityCatalog;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -34,6 +35,9 @@ class AppServiceProvider extends ServiceProvider
             if ($view->getData()['projectAdmin'] ?? false) {
                 $view->with('demoData', ['nav' => json_decode(file_get_contents(resource_path('data/admin-navigation.json')), true, 512, JSON_THROW_ON_ERROR)]);
             }
+        });
+        \Illuminate\Support\Facades\View::composer('admin.pages.dashboard', function (View $view): void {
+            $view->with('registeredUsersCount', User::query()->count());
         });
 
         \Illuminate\Support\Facades\View::composer(['admin.pages.dashboard', 'admin.pages.analytics', 'admin.pages.financial-reports'], function (View $view): void {

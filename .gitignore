@@ -25,3 +25,6 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+/.playwright-mcp/
+/aura_v2_backup_2026-11-16.patch

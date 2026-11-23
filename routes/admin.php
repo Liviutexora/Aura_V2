@@ -43,7 +43,7 @@ Route::post('/admin/reset-password', fn (Request $request, AuthController $contr
     ->middleware('throttle:3,1,password-update:')->name('aura.admin.password.update');
 
 Route::prefix('admin')->name('aura.admin.')->middleware(['auth', 'active', 'super_admin', 'verified:aura.verify-email'])->group(static function () use ($loadAuraAdminDemo) {
-    Route::get('/', static fn () => $loadAuraAdminDemo('dashboard'))->name('index');
+    Route::get('/', static fn () => redirect()->route('aura.admin.dashboard'))->name('index');
     Route::get('/users', [UserController::class, 'index'])->name('users');
     Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
     Route::post('/users/{user}/password', [UserController::class, 'resetPassword'])

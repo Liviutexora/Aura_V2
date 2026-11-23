@@ -14,7 +14,12 @@
 @endif
 <label><input type="checkbox" name="remember" value="1"> Ține-mă minte</label>
 <button class="btn" style="margin-top:22px">Intră în cont</button>
-<div class="links"><a href="{{ route('aura.register') }}">Creează un cont</a><a href="{{ ($authArea ?? 'user') === 'admin' ? route('aura.admin.password.request') : route('aura.forgot-password') }}">Ai uitat parola?</a></div>
+<div class="links" @if (($authArea ?? 'user') === 'admin') style="justify-content:flex-end" @endif>
+@if (($authArea ?? 'user') !== 'admin')
+    <a href="{{ route('aura.register') }}">Creează un cont</a>
+@endif
+<a href="{{ ($authArea ?? 'user') === 'admin' ? route('aura.admin.password.request') : route('aura.forgot-password') }}">Ai uitat parola?</a>
+</div>
 </form></div></main>
 @endsection
 <script>localStorage.removeItem('aura-logged-out');</script>
