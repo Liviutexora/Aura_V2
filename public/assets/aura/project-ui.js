@@ -15,15 +15,6 @@ function info(title, message) {
     dialog.showModal();
 }
 
-function followProjectHash() {
-    const match = location.hash.match(/^#\/(dashboard|opportunities|opportunity|projects|missions|mission)(?:\/(\d+))?$/);
-    if (match) {
-        const base = {opportunity:'opportunities',mission:'missions'}[match[1]] || match[1];
-        location.replace('/' + base + (match[2] ? '/' + match[2] : ''));
-    }
-}
-window.addEventListener('hashchange', followProjectHash);
-followProjectHash();
 const catalogFilter = document.querySelector('[data-catalog-filter]');
 if (catalogFilter) {
     catalogFilter.addEventListener('change', () => catalogFilter.requestSubmit());

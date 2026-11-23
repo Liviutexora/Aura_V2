@@ -1,24 +1,144 @@
-const $=s=>document.querySelector(s);const navs=[['dashboard','Dashboard','✦'],['opportunities','Oportunități','◎'],['missions','Misiunile mele','☑'],['projects','Proiectele mele','▣'],['achievements','Realizări','★'],['wallet','Wallet','◈'],['referrals','Recomandări','↗'],['integrations','Aplicațiile mele','⌘'],['subscriptions','Abonament','♛'],];
-let state;try{state=JSON.parse(localStorage.getItem('aura-demo-v1'))}catch{}state=state||{apps:['Aurelion'],plan:'Premium',name:window.AURA_AUTH_USER_NAME||'',email:window.AURA_AUTH_USER_EMAIL||''};if(window.AURA_AUTH_USER_NAME)state.name=window.AURA_AUTH_USER_NAME;const save=()=>localStorage.setItem('aura-demo-v1',JSON.stringify(state));const bar=n=>`<div class="progress"><i style="width:${n}%"></i></div>`;const btn=(text,href,secondary=false)=>`<a class="btn ${secondary?'secondary':''}" href="#/${href}">${text}</a>`;const badge=(s,pending=false)=>`<span class="status ${pending?'pending':''}">${s}</span>`;const escapeHTML=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function toast(s){$('#toast').textContent=s;$('#toast').classList.add('show');setTimeout(()=>$('#toast').classList.remove('show'),3300)}function modal(title,body){$('#modal').innerHTML=`<button style="float:right" onclick="document.querySelector('dialog').close()" aria-label="Închide">✕</button><h2>${title}</h2>${body}`;$('#modal').showModal()}function info(title,body){modal(title,`<p>${body}</p><button class="btn secondary" style="margin-top:20px" onclick="document.querySelector('dialog').close()">Am înțeles</button>`)}
-function shell(content,route,guest=false){return `<header><a class="brand" href="#/${guest?'home':'dashboard'}"><span class="crown">♛</span>Aura<span class="premium">${guest?'Oportunități':escapeHTML(state.plan)}</span></a><nav>${(guest?[['home','Descoperă Aura'],['opportunities','Oportunități'],['pricing','Abonamente']]:[['dashboard','✦ Aura'],['projects','☑ Proiecte'],['missions','▣ Misiuni'],['wallet','▥ Finanțe']]).map(([id,label])=>`<a href="#/${id}" class="${route===id?'active':''}">${label}</a>`).join('')}</nav><div>${guest?btn('Intră în cont','login',true):`<button aria-label="Notificări" onclick="info('Notificările tale','Misiunea Bonus bancar are termen pe 30 noiembrie. Ai o insignă nouă: Primul pas. Notificări demonstrative.')">♧</button><a href="#" class="avatar">L</a>`}</div></header><main class="wrap">${!guest?`<nav class="subnav" aria-label="Navigare utilizator">${navs.map(([id,label])=>`<a href="#/${id}" class="${route===id?'active':''}">${label}</a>`).join('')}</nav>`:''}${content}<footer class="footer"><span>♛ Aura · Descoperă oportunități. Câștigă mai mult.</span><span>Date demonstrative · Câștigurile sunt condiționate și nu sunt garantate.</span></footer></main>${!guest?`<nav class="mobile-nav">${navs.slice(0,3).concat([navs[5]]).map(([id,label,icon])=>`<a href="#/${id}" class="${route===id?'active':''}"><span>${icon}</span>${label}</a>`).join('')}</nav>`:''}`}
-function title(t,sub,action=''){return `<div class="heading"><div><div class="eyebrow">SPAȚIUL TĂU DE OPORTUNITĂȚI</div><h1>${t}</h1><p>${sub}</p></div>${action===null?'':action||'<span class="demo">DEMO INTERACTIV</span>'}</div>`}
-function xp(){return `<div class="xp"><div class="ring"><div><span class="gold" style="font-size:23px">♛</span><b>Nivel 3</b><span>Explorator</span></div></div><div class="xp-info"><b><span class="gold">430</span> / 600 <small>XP</small></b>${bar(72)}<small>Încă 170 XP până la nivelul 4 ⓘ</small></div></div>`}
-function achievements(){return `<div class="badges">${[['🚀','Primul pas'],['🏛️','Explorator<br>bancar'],['🪙','Vânător<br>de bonusuri'],['▦','Organizat'],['🔒','Expert<br>Aura']].map(([i,n],k)=>`<button class="badge ${k===4?'locked':''}" onclick="info('${n.replace('<br>',' ')}','${k===4?'Deblochează la nivelul 5, după finalizarea a 20 de misiuni.':'Insignă demonstrativă obținută pe 2 noiembrie 2026. Criteriu: '+['Începe prima misiune.','Explorează o oportunitate bancară.','Finalizează trei oportunități.','Organizează primul proiect.'][k]}')"><div class="medal">${i}</div>${n}</button>`).join('')}</div>`}
+'use strict';
 
-const transactions=[['03 nov. 2026','Texora Studio','Recomandare site prezentare','150 lei','Disponibil'],['02 nov. 2026','Angels Legacy','Comision recomandare','80 lei','În așteptare'],['01 nov. 2026','Loyalty Club','Conversie validată','45 lei','Aprobat'],['28 oct. 2026','Texora','Comision recurent','100 lei','Plătit'],['25 oct. 2026','Angels Legacy','Comandă anulată','30 lei','Respins']];
-function wallet(){return title('Aura Wallet','Toate comisioanele tale, într-un singur loc.')+`<div class="mini-stats">${[['În așteptare','250 lei'],['Disponibil','430 lei'],['Plătite','1.200 lei']].map(([l,n])=>`<div class="card"><small>${l}</small><b class="gold">${n}</b><small>Sold demonstrativ</small></div>`).join('')}</div><div class="notice">Aura Wallet urmărește comisioanele. Nu deține depozite și nu efectuează transferuri. Total istoric demo: 1.925 lei · Aprobate: 45 lei.</div><section class="card"><div class="section-head"><h2>Istoricul comisioanelor</h2><select id="tx-status" aria-label="Stare comision"><option>Toate stările</option>${['În așteptare','Aprobat','Disponibil','Plătit','Respins'].map(s=>`<option>${s}</option>`).join('')}</select></div><div class="table-wrap"><table><thead><tr>${['Dată','Aplicație','Descriere','Sumă','Stare',''].map(s=>`<th>${s}</th>`).join('')}</tr></thead><tbody id="transactions"></tbody></table></div></section><section class="card" style="margin-top:20px"><h2>Istoricul plăților</h2><p>28 octombrie 2026 · 100 lei · Texora · Plătit (demo)</p><p>Plățile sunt efectuate și confirmate de aplicațiile sursă.</p></section>`}
-function tx(){let status=$('#tx-status').value;$('#transactions').innerHTML=transactions.filter(t=>status==='Toate stările'||t[4]===status).map((t)=>`<tr>${t.map((v,i)=>`<td>${i===4?badge(v,v==='În așteptare'):v}</td>`).join('')}<td><button onclick="info('Detalii comision','${t[1]} · ${t[2]} · ${t[3]} · ${t[4]}. Referință: DEMO-2026. Validarea și plata sunt responsabilitatea aplicației sursă.')">Detalii ↗</button></td></tr>`).join('')}
-const apps=[['Aurelion','✦','Organizează proiecte, acțiuni și mementouri.'],['Texora','T','Programări și relații cu clienții.'],['Texora Studio','▣','Site-uri profesionale pentru afaceri.'],['Angels Legacy','🦋','Comunitate, produse și recomandări.'],['Loyalty Club','♾️','Beneficii și fidelitate în comunitate.']];
-function integrations(){return title('Aplicațiile mele','Alegi ce conectezi. Ecosistemul tău, în ritmul tău.')+`<div class="notice">Conexiuni simulate. Nu se creează conturi și nu se accesează API-uri externe.</div><div class="catalog">${apps.map(([n,i,d])=>`<article class="card"><div class="section-head"><span class="tile pink">${i}</span>${badge(state.apps.includes(n)?'Conectat · demo':'Neconectat',!state.apps.includes(n))}</div><h3>${n}</h3><p>${d}</p><small>Funcții: urmărire progres · recomandări · sincronizare viitoare</small><button class="btn secondary" onclick="toggleApp('${n}')">${state.apps.includes(n)?'Deconectează':'Conectează'}</button>${state.apps.includes(n)?`<button onclick="info('${n}','Previzualizare de integrare. Conectarea reală și autentificarea vor fi implementate separat în Laravel.')">Deschide aplicația ↗</button>`:''}</article>`).join('')}</div>`}
-function toggleApp(n){state.apps=state.apps.includes(n)?state.apps.filter(a=>a!==n):[...state.apps,n];save();render();toast('Conexiune demo actualizată')}
-function plans(){return `<div class="catalog">${[['Free','0','lei','Oportunități și misiuni de bază'],['Premium','15','lei / lună','Misiuni nelimitate și mementouri avansate'],['Premium trimestrial','45','lei / 3 luni','Toate beneficiile Premium pentru trei luni']].map(([n,p,u,d])=>`<article class="card ${n==='Premium'?'highlight':''}"><h2>Aura ${n}</h2><div class="plan-price gold">${p} <small>${u}</small></div><p>${d}</p><ul class="steps"><li>✓ Urmărirea oportunităților</li><li>✓ Acces la comisioanele câștigate</li><li>✓ ${n==='Free'?'Progres și insigne de bază':'Analize extinse și gamification Premium'}</li></ul><button class="btn ${n==='Free'?'secondary':''}" onclick="choosePlan('${n}')">${state.plan===n?'Planul tău actual':'Alege '+n}</button></article>`).join('')}</div>`}
-function choosePlan(n){info('Plan Aura '+n,`Ai ales ${n}. Aceasta este o previzualizare; nu se efectuează plăți. Integrarea Stripe va fi adăugată ulterior.`)}
-function render(){
-const accountRoutes = {login:'/login', register:'/register', 'forgot-password':'/forgot-password', 'reset-password':'/forgot-password', 'verify-email':'/verify-email', profile:'/settings', settings:'/settings'};
-const accountRoute = location.hash.replace(/^#\/?/, '');
-if (Object.hasOwn(accountRoutes, accountRoute)) { location.replace(accountRoutes[accountRoute]); return; }
-if(location.hash==='#/referrals'){location.replace('/referrals');return}const match=location.hash.match(/^#\/(dashboard|opportunities|opportunity|missions|mission|projects)(?:\/(\d+))?$/);if(match){const base={opportunity:'opportunities',mission:'missions'}[match[1]]||match[1];location.replace('/'+base+(match[2]?'/'+match[2]:''));return}if(['settings','subscriptions'].includes(window.AURA_INITIAL_ROUTE)){if(location.hash==='#/profile'||location.hash==='#/settings')history.replaceState(null,'',location.pathname+location.search);return}let [r,id]=(location.hash.replace(/^#\/?/,'')||window.AURA_INITIAL_ROUTE||'dashboard').split('/');let guest=['home','pricing','login','register','forgot-password','reset-password','verify-email'].includes(r);let content;switch(r){case'home':location.assign('/');return;case'pricing':content=title('Planuri simple. Mai multe posibilități.','Alege planul potrivit pentru tine.')+plans();break;case'achievements':content=title('Realizările tale','Progresul tău merită să fie văzut.')+`<div class="split"><div class="card">${xp()}<p>XP reprezintă experiență, separat de recompensele financiare.</p></div><div class="card"><h2>Istoricul progresului</h2><p>2 nov. · Primul pas · +20 XP</p><p>1 nov. · Oportunitate explorată · +10 XP</p><p>28 oct. · Misiune finalizată · +50 XP</p></div></div><div class="card" style="margin-top:20px"><h2>Colecția ta de insigne</h2>${achievements()}</div>`;break;case'wallet':content=wallet();break;case'integrations':content=integrations();break;case'subscriptions':window.location.assign('/subscriptions');return;case'admin':content=title('Aura Admin · Etapa 2','Panoul de administrare va fi construit după aprobarea etapei 1.')+btn('Înapoi la Aura','dashboard');break;default:location.assign('/dashboard');return}
-$('#app').innerHTML=auraPolishIcons(shell(content,r,guest));if(r==='wallet'){tx();$('#tx-status').onchange=tx}['#results','#mission-list','#transactions'].forEach(sel=>{const el=$(sel);if(el)el.innerHTML=auraPolishIcons(el.innerHTML)});}
+const demoStateKey = 'aura-demo-v1';
+let demoState;
 
-window.addEventListener('hashchange',()=>{render();scrollTo(0,0)});render();
+try {
+    demoState = JSON.parse(localStorage.getItem(demoStateKey));
+} catch {
+    demoState = null;
+}
+
+if (!demoState || typeof demoState !== 'object') {
+    demoState = {};
+}
+
+if (!Array.isArray(demoState.apps)) {
+    demoState.apps = ['Aurelion'];
+}
+
+function saveDemoState() {
+    localStorage.setItem(demoStateKey, JSON.stringify(demoState));
+}
+
+function toast(message) {
+    const element = document.getElementById('toast');
+
+    if (!element) {
+        return;
+    }
+
+    element.textContent = message;
+    element.classList.add('show');
+    window.setTimeout(() => element.classList.remove('show'), 3300);
+}
+
+function info(title, message) {
+    const dialog = document.getElementById('modal');
+
+    if (!dialog) {
+        return;
+    }
+
+    const close = document.createElement('button');
+    close.type = 'button';
+    close.style.cssText = 'float:right';
+    close.setAttribute('aria-label', 'Închide');
+    close.textContent = '✕';
+    close.addEventListener('click', () => dialog.close());
+
+    const heading = document.createElement('h2');
+    heading.textContent = title;
+
+    const details = document.createElement('p');
+    details.textContent = message;
+
+    const acknowledge = document.createElement('button');
+    acknowledge.type = 'button';
+    acknowledge.className = 'btn secondary';
+    acknowledge.style.marginTop = '20px';
+    acknowledge.textContent = 'Am înțeles';
+    acknowledge.addEventListener('click', () => dialog.close());
+
+    dialog.replaceChildren(close, heading, details, acknowledge);
+    dialog.showModal();
+}
+
+function choosePlan(name) {
+    info(
+        `Plan Aura ${name}`,
+        `Ai ales ${name}. Aceasta este o previzualizare; nu se efectuează plăți. Integrarea Stripe va fi adăugată ulterior.`,
+    );
+}
+
+function filterTransactions() {
+    const tableBody = document.getElementById('transactions');
+    const statusFilter = document.getElementById('tx-status');
+
+    if (!tableBody || !statusFilter) {
+        return;
+    }
+
+    tableBody.querySelectorAll('tr').forEach((row) => {
+        row.hidden = statusFilter.value !== 'Toate stările'
+            && row.dataset.status !== statusFilter.value;
+    });
+}
+
+function syncIntegrationCards() {
+    document.querySelectorAll('.catalog .card').forEach((card) => {
+        const name = card.querySelector('h3')?.textContent?.trim();
+        const status = card.querySelector('.status');
+        const toggle = Array.from(card.querySelectorAll('button')).find((button) => (
+            button.getAttribute('onclick')?.startsWith('toggleApp(')
+        ));
+
+        if (!name || !status || !toggle) {
+            return;
+        }
+
+        let preview = card.querySelector('[data-integration-preview]');
+
+        if (!preview) {
+            preview = Array.from(card.querySelectorAll('button')).find((button) => button !== toggle);
+            preview?.setAttribute('data-integration-preview', '');
+        }
+
+        const connected = demoState.apps.includes(name);
+        status.textContent = connected ? 'Conectat · demo' : 'Neconectat';
+        status.classList.toggle('pending', !connected);
+        toggle.textContent = connected ? 'Deconectează' : 'Conectează';
+
+        if (!connected) {
+            preview?.remove();
+            return;
+        }
+
+        if (!preview) {
+            preview = document.createElement('button');
+            preview.type = 'button';
+            preview.setAttribute('data-integration-preview', '');
+            preview.textContent = 'Deschide aplicația ↗';
+            preview.addEventListener('click', () => info(
+                name,
+                'Previzualizare de integrare. Conectarea reală și autentificarea vor fi implementate separat în Laravel.',
+            ));
+            card.appendChild(preview);
+        }
+    });
+}
+
+function toggleApp(name) {
+    demoState.apps = demoState.apps.includes(name)
+        ? demoState.apps.filter((app) => app !== name)
+        : [...demoState.apps, name];
+
+    saveDemoState();
+    syncIntegrationCards();
+    toast('Conexiune demo actualizată');
+}
+
+const transactionFilter = document.getElementById('tx-status');
+transactionFilter?.addEventListener('change', filterTransactions);
+filterTransactions();
+syncIntegrationCards();
