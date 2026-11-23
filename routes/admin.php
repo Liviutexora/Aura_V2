@@ -12,9 +12,16 @@ use Illuminate\Support\Facades\Route;
 // Register admin-only anonymous components. Move to AppServiceProvider when replacing demo routes.
 Blade::anonymousComponentPath(resource_path('views/admin/components'), 'aura-admin');
 
-// LOCAL PREVIEW ONLY: no new authentication system or production authorization is implemented.
-$loadAuraAdminDemo = static function (string $page, ?string $recordId = null, ?string $mode = null) {
-    abort_unless(app()->environment(['local', 'testing']), 403);
+$auraAdminDemoPages = [
+    'subscriptions', 'levels', 'xprules', 'achievements', 'transactions', 'commissions', 'payouts',
+    'referrals', 'referral-rules', 'conversions', 'links', 'events', 'notifications', 'announcements',
+    'messageTemplates', 'plans', 'audit', 'analytics', 'financial-reports', 'activity', 'gamification',
+    'progress', 'wallet', 'integrations', 'integration-config', 'delivery-log', 'roles', 'settings',
+];
+$auraAdminDemoRoutePattern = implode('|', array_map(static fn (string $page): string => preg_quote($page, '/'), $auraAdminDemoPages));
+
+$loadAuraAdminDemo = static function (string $page, ?string $recordId = null, ?string $mode = null) use ($auraAdminDemoPages) {
+    abort_unless(in_array($page, $auraAdminDemoPages, true), 404);
     $demoData = json_decode(file_get_contents(resource_path('data/admin-demo.json')), true, 512, JSON_THROW_ON_ERROR);
     $routeMap = json_decode(file_get_contents(resource_path('data/admin-route-map.json')), true, 512, JSON_THROW_ON_ERROR);
     abort_unless(isset($routeMap[$page]), 404);
@@ -30,8 +37,20 @@ $loadAuraAdminDemo = static function (string $page, ?string $recordId = null, ?s
     }
     $demoTable = ['columns' => explode(',', $demoData['tables'][$page][1] ?? ''), 'rows' => $tableRows];
     $demoPage = $page.($recordId !== null ? '/'.$recordId : '').($mode !== null ? '/'.$mode : '');
+    $record = null;
+    if ($recordId !== null && $recordId !== 'create') {
+        $recordSource = $page === 'integrations' ? ($demoData['connections'] ?? []) : $tableRows;
+        foreach ($recordSource as $candidate) {
+            if (($candidate['id'] ?? null) === $recordId) {
+                $record = $candidate;
+                break;
+            }
+        }
+    }
 
-    return view($recordId === null ? $routeMap[$page] : 'admin.pages.record', compact('demoData', 'demoTable', 'demoPage', 'pageTitle'));
+    return view($recordId === null ? $routeMap[$page] : 'admin.pages.record', compact('demoData', 'demoTable', 'demoPage', 'pageTitle', 'recordId', 'mode', 'record'))
+        ->with('auraAdminDemo', true)
+        ->with('auraAdminServerRendered', true);
 };
 
 Route::get('/admin/login', fn (AuthController $controller) => $controller->showLogin('admin'))->name('aura.admin.login');
@@ -42,7 +61,7 @@ Route::post('/admin/forgot-password', fn (Request $request, AuthController $cont
 Route::post('/admin/reset-password', fn (Request $request, AuthController $controller) => $controller->resetPassword($request, 'admin'))
     ->middleware('throttle:3,1,password-update:')->name('aura.admin.password.update');
 
-Route::prefix('admin')->name('aura.admin.')->middleware(['auth', 'active', 'super_admin', 'verified:aura.verify-email'])->group(static function () use ($loadAuraAdminDemo) {
+Route::prefix('admin')->name('aura.admin.')->middleware(['auth', 'active', 'super_admin', 'verified:aura.verify-email'])->group(static function () use ($auraAdminDemoRoutePattern, $loadAuraAdminDemo) {
     Route::get('/', static fn () => redirect()->route('aura.admin.dashboard'))->name('index');
     Route::get('/users', [UserController::class, 'index'])->name('users');
     Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
@@ -80,10 +99,10 @@ Route::prefix('admin')->name('aura.admin.')->middleware(['auth', 'active', 'supe
     Route::get('/transactions', static fn () => $loadAuraAdminDemo('transactions'))->name('transactions');
     Route::get('/commissions', static fn () => $loadAuraAdminDemo('commissions'))->name('commissions');
     Route::get('/payouts', static fn () => $loadAuraAdminDemo('payouts'))->name('payouts');
-    foreach (['referrals', 'referral-rules', 'conversions', 'links'] as $section) {
-        Route::get($section.'/{legacyPath?}', static fn () => redirect()->route('aura.admin.users'))
-            ->where('legacyPath', '.*')->name($section);
-    }
+    Route::get('/referrals', static fn () => $loadAuraAdminDemo('referrals'))->name('referrals');
+    Route::get('/referral-rules', static fn () => $loadAuraAdminDemo('referral-rules'))->name('referral-rules');
+    Route::get('/conversions', static fn () => $loadAuraAdminDemo('conversions'))->name('conversions');
+    Route::get('/links', static fn () => $loadAuraAdminDemo('links'))->name('links');
     Route::get('/events', static fn () => $loadAuraAdminDemo('events'))->name('events');
     Route::get('/notifications', static fn () => $loadAuraAdminDemo('notifications'))->name('notifications');
     Route::get('/announcements', static fn () => $loadAuraAdminDemo('announcements'))->name('announcements');
@@ -111,5 +130,8 @@ Route::prefix('admin')->name('aura.admin.')->middleware(['auth', 'active', 'supe
     Route::get('/delivery-log', static fn () => $loadAuraAdminDemo('delivery-log'))->name('delivery-log');
     Route::get('/roles', static fn () => $loadAuraAdminDemo('roles'))->name('roles');
     Route::get('/settings', static fn () => $loadAuraAdminDemo('settings'))->name('settings');
-    Route::get('/{entity}/{recordId}/{mode?}', static fn (string $entity, string $recordId, ?string $mode = null) => $loadAuraAdminDemo($entity, $recordId, $mode))->where('entity', '(?!(?:opportunities|categories|eligibility|mission-templates|projects|missions|verification)(?:/|$))[^/]+')->where('mode', 'edit')->name('record');
+    Route::get('/{entity}/{recordId}/{mode?}', static fn (string $entity, string $recordId, ?string $mode = null) => $loadAuraAdminDemo($entity, $recordId, $mode))
+        ->where('entity', $auraAdminDemoRoutePattern)
+        ->where('mode', 'edit')
+        ->name('record');
 });

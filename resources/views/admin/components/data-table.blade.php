@@ -9,8 +9,8 @@
 @elseif(in_array($column, ['name', 'title'], true))<b>{{ $row[$column] }}</b>@if(!empty($row['email']))<br><small>{{ $row['email'] }}</small>@endif
 @else{{ $row[$column] ?? '' }}@endif</td>
 @endforeach
-<td><div class="actions"><a class="icon-button" href="{{ url('/admin') }}/#/{{ $entity }}/{{ $row['id'] }}" aria-label="Detalii {{ $row['name'] ?? $row['title'] ?? $row['id'] }}"><x-aura-admin::icon name="eye" /></a>
-@if(isset($schemas[$entity]))<a class="icon-button" href="{{ url('/admin') }}/#/{{ $entity }}/{{ $row['id'] }}/edit" aria-label="Editează {{ $row['name'] ?? $row['title'] ?? $row['id'] }}"><x-aura-admin::icon name="edit" /></a>@endif
+<td><div class="actions"><a class="icon-button" href="{{ route('aura.admin.record', ['entity' => $entity, 'recordId' => $row['id']]) }}" aria-label="Detalii {{ $row['name'] ?? $row['title'] ?? $row['id'] }}"><x-aura-admin::icon name="eye" /></a>
+@if(isset($schemas[$entity]))<a class="icon-button" href="{{ route('aura.admin.record', ['entity' => $entity, 'recordId' => $row['id'], 'mode' => 'edit']) }}" aria-label="Editează {{ $row['name'] ?? $row['title'] ?? $row['id'] }}"><x-aura-admin::icon name="edit" /></a>@endif
 @if(in_array($entity, ['commissions', 'payouts', 'verification'], true))<button class="icon-button" aria-label="Revizuiește {{ $row['id'] }}" onclick="review('{{ $entity }}','{{ $row['id'] }}')"><x-aura-admin::icon name="check" /></button>@endif
 </div></td></tr>
 @endforeach
