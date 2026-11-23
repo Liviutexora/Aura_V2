@@ -90,7 +90,16 @@ Route::prefix('admin')->name('aura.admin.')->middleware(['auth', 'active', 'supe
     Route::get('/messageTemplates', static fn () => $loadAuraAdminDemo('messageTemplates'))->name('messageTemplates');
     Route::get('/plans', static fn () => $loadAuraAdminDemo('plans'))->name('plans');
     Route::get('/audit', static fn () => $loadAuraAdminDemo('audit'))->name('audit');
-    Route::get('/dashboard', static fn () => $loadAuraAdminDemo('dashboard'))->name('dashboard');
+    Route::get('/dashboard', static function () {
+        $demoData = json_decode(file_get_contents(resource_path('data/admin-demo.json')), true, 512, JSON_THROW_ON_ERROR);
+
+        return view('admin.pages.dashboard', [
+            'auraAdminServerRendered' => true,
+            'demoData' => $demoData,
+            'demoPage' => 'dashboard',
+            'pageTitle' => 'Dashboard',
+        ]);
+    })->name('dashboard');
     Route::get('/analytics', static fn () => $loadAuraAdminDemo('analytics'))->name('analytics');
     Route::get('/financial-reports', static fn () => $loadAuraAdminDemo('financial-reports'))->name('financial-reports');
     Route::get('/activity', static fn () => $loadAuraAdminDemo('activity'))->name('activity');
