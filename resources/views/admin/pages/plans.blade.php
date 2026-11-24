@@ -3,7 +3,7 @@
 <div id="plans-page">
     <div class="admin-heading">
         <div><h1>Planuri de abonament</h1><p>Caută, filtrează și revizuiește planurile existente.</p></div>
-        <a class="btn admin-btn " href="#" data-plan-preview><x-aura-admin::icon name="plus" /> Adaugă</a>
+        <a class="btn admin-btn " href="{{ route('aura.admin.plans.create') }}"><x-aura-admin::icon name="plus" /> Adaugă</a>
     </div>
     <x-aura-admin::card class="admin-card">
         <div class="toolbar">
@@ -51,7 +51,7 @@
                         <td data-sort-status="{{ $plan->is_active ? 'Activ' : 'Inactiv' }}"><x-aura-admin::status-badge :status="$plan->is_active ? 'Activ' : 'Inactiv'" /></td>
                         <td><div class="actions">
                             <a class="icon-button" href="#" data-plan-preview aria-label="Detalii {{ $plan->name }}"><x-aura-admin::icon name="eye" /></a>
-                            <a class="icon-button" href="#" data-plan-preview aria-label="Editează {{ $plan->name }}"><x-aura-admin::icon name="edit" /></a>
+                            <a class="icon-button" href="{{ route('aura.admin.plans.edit', $plan) }}" aria-label="Editează {{ $plan->name }}"><x-aura-admin::icon name="edit" /></a>
                         </div></td>
                     </tr>
                 @endforeach
@@ -65,7 +65,7 @@
             <x-aura-admin::empty-state title="Niciun rezultat" description="Schimbă filtrele sau termenul de căutare." />
         </div>
     </x-aura-admin::card>
-    <x-aura-admin::alert message="Planuri reale din baza de date. Crearea, editarea, detaliile și exportul vor fi conectate ulterior." />
+    <x-aura-admin::alert message="Planuri reale din baza de date. Detaliile și exportul vor fi conectate ulterior." />
 </div>
 <script src="{{ asset('assets/admin/plans.js') }}?v={{ filemtime(public_path('assets/admin/plans.js')) }}" defer></script>
 @endsection

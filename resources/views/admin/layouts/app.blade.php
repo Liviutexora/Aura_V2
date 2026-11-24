@@ -8,7 +8,7 @@
 </head><body><div id="admin-app">
 @include('admin.components.topbar')
 @include('admin.components.sidebar')
-<main class="admin-main"><div class="crumb"><span>Aura Admin / {{ $pageTitle ?? 'Administrare' }}</span><span class="demo">{{ ($auraAdminDemo ?? false) ? 'DATE ȘI ACȚIUNI DEMO' : (($projectAdmin ?? false) ? 'DATE REALE' : 'DATE REALE · DOAR CITIRE') }}</span></div>
+<main class="admin-main"><div class="crumb"><span>Aura Admin / {{ $pageTitle ?? 'Administrare' }}</span><span class="demo">{{ ($auraAdminDemo ?? false) ? 'DATE ȘI ACȚIUNI DEMO' : (($projectAdmin ?? false) || ($realPlanForm ?? false) ? 'DATE REALE' : 'DATE REALE · DOAR CITIRE') }}</span></div>
 @if($projectAdmin ?? false)
 @if(session('status'))<div class="admin-notice" role="status">{{ session('status') }}</div>@endif
 @if($errors->any())<div class="admin-notice error-state" role="alert">@foreach($errors->all() as $error)<p>{{ $error }}</p>@endforeach</div>@endif

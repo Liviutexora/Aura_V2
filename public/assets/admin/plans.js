@@ -1,6 +1,18 @@
 'use strict';
 
 (() => {
+    const form = document.querySelector('[data-real-plan-form]');
+    if (form) {
+        form.querySelectorAll('[data-unlimited-for]').forEach(checkbox => {
+            const input = document.getElementById(checkbox.dataset.unlimitedFor);
+            const updateLimit = () => {
+                input.disabled = checkbox.checked;
+                input.required = !checkbox.checked;
+            };
+            checkbox.addEventListener('change', updateLimit);
+            updateLimit();
+        });
+    }
     const page = document.getElementById('plans-page');
     if (!page) {
         return;

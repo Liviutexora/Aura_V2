@@ -1,5 +1,83 @@
 @extends('admin.layouts.app')
 @section('content')
+@if($realPlanForm ?? false)
+<div class="admin-heading">
+    <div><h1>{{ $plan->exists ? 'Editează '.$plan->name : 'Adaugă abonament' }}</h1><p>Completează datele și salvează modificările.</p></div>
+    <a class="btn admin-btn secondary" href="{{ route('aura.admin.plans') }}">Înapoi</a>
+</div>
+<x-aura-admin::card class="admin-card">
+    <form id="record-form" class="admin-form" method="POST" action="{{ $plan->exists ? route('aura.admin.plans.update', $plan) : route('aura.admin.plans.store') }}" data-real-plan-form>
+        @csrf
+        @if($plan->exists)
+            @method('PATCH')
+            <input type="hidden" name="version" value="{{ old('version', $plan->version) }}">
+        @endif
+        <input type="hidden" name="plan_form" value="1">
+        <input type="hidden" name="request_key" value="{{ old('request_key', (string) \Illuminate\Support\Str::uuid()) }}">
+        <div>
+            <label for="field-name">Nume abonament *</label>
+            <input id="field-name" name="name" type="text" maxlength="120" value="{{ old('name', $plan->name) }}" required>
+        </div>
+        <div>
+            <label for="field-access_level">Nivel numeric de acces *</label>
+            <input id="field-access_level" name="access_level" type="number" min="1" max="1000000" step="1" value="{{ old('access_level', $plan->access_level) }}" required>
+        </div>
+        <div>
+            <label for="field-monthly_price">Preț lunar (lei) *</label>
+            <input id="field-monthly_price" name="monthly_price" type="text" inputmode="decimal" value="{{ old('monthly_price', $plan->exists ? number_format($plan->monthly_price_minor / 100, 2, '.', '') : '') }}" required>
+        </div>
+        <div>
+            <label for="field-quarterly_price">Preț trimestrial (lei) *</label>
+            <input id="field-quarterly_price" name="quarterly_price" type="text" inputmode="decimal" value="{{ old('quarterly_price', $plan->exists ? number_format($plan->quarterly_price_minor / 100, 2, '.', '') : '') }}" required>
+        </div>
+        @foreach([
+            'max_projects' => 'Maximum proiecte simultane',
+            'max_explorer_projects' => 'Maximum proiecte Explorator',
+            'max_mentor_projects' => 'Maximum proiecte Mentor',
+        ] as $field => $label)
+            @php
+                $unlimited = (string) old($field.'_unlimited', $plan->exists && $plan->{$field} === null ? '1' : '0') === '1';
+            @endphp
+            <div>
+                <label for="field-{{ $field }}">{{ $label }} *</label>
+                <input id="field-{{ $field }}" name="{{ $field }}" type="number" min="0" max="1000000" step="1" value="{{ old($field, $plan->{$field}) }}" title="0 = proiectele de acest tip nu sunt permise" @required(!$unlimited) @disabled($unlimited)>
+                <input type="hidden" name="{{ $field }}_unlimited" value="0">
+                <label class="field"><span><input type="checkbox" name="{{ $field }}_unlimited" value="1" data-unlimited-for="field-{{ $field }}" @checked($unlimited)> Nelimitat</span></label>
+            </div>
+        @endforeach
+        <div>
+            <label for="field-trial_days">Trial gratuit — număr de zile (0 = dezactivat) *</label>
+            <input id="field-trial_days" name="trial_days" type="number" min="0" max="3650" step="1" value="{{ old('trial_days', $plan->trial_days) }}" required>
+        </div>
+        <div class="full">
+            <label for="field-benefits_text">Beneficii — câte unul pe linie</label>
+            <textarea id="field-benefits_text" name="benefits_text">{{ old('benefits_text', implode("\n", $plan->benefits ?? [])) }}</textarea>
+        </div>
+        <div>
+            <label for="field-is_active">Stare *</label>
+            @php
+                $activeValue = (string) old('is_active', $plan->exists ? ($plan->is_active ? '1' : '0') : '');
+            @endphp
+            <select id="field-is_active" name="is_active" required>
+                <option value="" @selected($activeValue === '')>—</option>
+                <option value="1" @selected($activeValue === '1')>Activ</option>
+                <option value="0" @selected($activeValue === '0')>Inactiv</option>
+            </select>
+        </div>
+        <div class="full form-actions">
+            <button class="btn admin-btn" type="submit">Salvează</button>
+            <a class="btn admin-btn secondary" href="{{ route('aura.admin.plans') }}">Renunță</a>
+        </div>
+        <p id="form-error" class="full" role="alert" style="color:#ffc1d1">
+            @foreach($errors->all() as $message)
+                {{ $message }}
+                @if(!$loop->last)<br>@endif
+            @endforeach
+        </p>
+    </form>
+</x-aura-admin::card>
+<script src="{{ asset('assets/admin/plans.js') }}?v={{ filemtime(public_path('assets/admin/plans.js')) }}" defer></script>
+@else
 @php
 $entity = strtok($demoPage, '/');
 $isCreate = $recordId === 'create';
@@ -80,5 +158,6 @@ $options = $fieldOptions[$field] ?? null;
 @if(in_array($entity, ['transactions', 'commissions', 'payouts'], true))<x-aura-admin::alert :message="($record['type'] ?? null) === 'Bonus extern informativ' ? 'Bonus extern informativ: nu reprezintă datorie Aura și nu intră în soldul disponibil.' : 'Registru de comisioane. Fără depozite sau transferuri reale.'" /><x-aura-admin::card class="admin-card" style="margin-top:18px"><h2>Urmă de audit</h2><div class="timeline"><div class="event"><time>05 nov.</time><span>Înregistrare demonstrativă primită · {{ $record['reference'] ?? $recordId }}</span></div><div class="event"><time>05 nov.</time><span>Stare: {{ $record['status'] ?? 'Demo' }}</span></div></div></x-aura-admin::card>@endif
 @else
 <div class="admin-heading"><div><h1>Înregistrare negăsită</h1><p>Referința nu există în eșantion.</p></div><a class="btn admin-btn secondary" href="{{ route('aura.admin.'.$entity) }}">Înapoi</a></div><x-aura-admin::empty-state title="Înregistrare negăsită" description="Referința nu există în datele demonstrative." />
+@endif
 @endif
 @endsection

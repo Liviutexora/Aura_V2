@@ -13,11 +13,140 @@ use App\Services\SubscriptionAccess;
 use Database\Seeders\SubscriptionPlanSeeder;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Str;
+use PHPUnit\Framework\Attributes\TestWith;
 use Tests\TestCase;
 
 class SubscriptionInfrastructureTest extends TestCase
 {
     use LazilyRefreshDatabase;
+
+    #[TestWith([7, 7, 7, []])]
+    #[TestWith([null, 3, null, []])]
+    #[TestWith([null, null, null, []])]
+    #[TestWith([0, 0, 0, []])]
+    #[TestWith([7, 0, 7, []])]
+    #[TestWith([3, 6, 2, ['max_explorer_projects']])]
+    #[TestWith([3, 2, 6, ['max_mentor_projects']])]
+    #[TestWith([3, null, 2, ['max_explorer_projects']])]
+    #[TestWith([3, 2, null, ['max_mentor_projects']])]
+    #[TestWith([0, 1, 0, ['max_explorer_projects']])]
+    /** @param list<string> $errors */
+    public function test_plan_limits_are_validated_on_creation_and_editing(?int $total, ?int $explorer, ?int $mentor, array $errors): void
+    {
+        $admin = User::factory()->create(['role' => 'super_admin', 'status' => 'active']);
+        $plan = Plan::factory()->create()->refresh();
+        $limits = ['max_projects' => $total, 'max_explorer_projects' => $explorer, 'max_mentor_projects' => $mentor];
+        $payload = array_replace($plan->terms(), $limits, ['is_active' => true, 'request_key' => (string) Str::uuid()]);
+        unset($payload['version']);
+        $count = Plan::count();
+        $created = $this->actingAs($admin)->postJson('/admin/plans', $payload);
+        $updated = $this->patchJson('/admin/plans/'.$plan->id, $limits + ['version' => 1, 'request_key' => (string) Str::uuid()]);
+        if ($errors !== []) {
+            $created->assertUnprocessable()->assertJsonValidationErrors($errors);
+            $updated->assertUnprocessable()->assertJsonValidationErrors($errors);
+            $this->assertDatabaseCount('plans', $count);
+            $this->assertDatabaseCount('subscription_events', 0);
+            $this->assertSame(5, $plan->fresh()->max_projects);
+
+            return;
+        }
+        $created->assertCreated();
+        $updated->assertOk();
+        foreach ($limits as $field => $value) {
+            $created->assertJsonPath($field, $value);
+            $updated->assertJsonPath($field, $value);
+        }
+    }
+
+    public function test_partial_edits_validate_the_combined_limits_and_html_forms_show_the_error(): void
+    {
+        $admin = User::factory()->create(['role' => 'super_admin', 'status' => 'active']);
+        $plan = Plan::factory()->create()->refresh();
+        $this->actingAs($admin)->patchJson('/admin/plans/'.$plan->id, [
+            'max_projects' => 2, 'version' => 1, 'request_key' => (string) Str::uuid(),
+        ])->assertUnprocessable()->assertJsonValidationErrors(['max_explorer_projects']);
+        $form = ['plan_form' => 1, 'name' => $plan->name, 'access_level' => 1, 'monthly_price' => '19,00',
+            'quarterly_price' => '45.00', 'max_projects' => 3, 'max_explorer_projects' => 6, 'max_mentor_projects' => 2,
+            'max_projects_unlimited' => 0, 'max_explorer_projects_unlimited' => 0, 'max_mentor_projects_unlimited' => 0,
+            'trial_days' => 0, 'benefits_text' => '', 'is_active' => 1, 'request_key' => (string) Str::uuid()];
+        $this->from('/admin/plans/create')->post('/admin/plans', $form)
+            ->assertRedirect('/admin/plans/create');
+        $this->withCookie(config('session.cookie'), session()->getId());
+        $this->get('/admin/plans/create')->assertOk()->assertSee('Limita Explorator nu poate depăși limita totală de 3 proiecte.');
+        $form['version'] = 1;
+        $form['request_key'] = (string) Str::uuid();
+        $this->from('/admin/plans/'.$plan->id.'/edit')->patch('/admin/plans/'.$plan->id, $form)
+            ->assertRedirect('/admin/plans/'.$plan->id.'/edit')->assertSessionHasErrors('max_explorer_projects');
+        $this->assertSame(1, $plan->fresh()->version);
+    }
+
+    #[TestWith([3, 4])]
+    #[TestWith([6, 1])]
+    public function test_mixed_projects_share_the_total_limit_at_acceptance(int $explorers, int $mentors): void
+    {
+        $admin = User::factory()->create(['role' => 'super_admin', 'status' => 'active']);
+        $owner = User::factory()->create(['status' => 'active']);
+        $plan = Plan::factory()->create(['max_projects' => 7, 'max_explorer_projects' => 7, 'max_mentor_projects' => 7]);
+        UserMembership::create(['user_id' => $owner->id, 'plan_id' => $plan->id, 'source' => 'manual', 'terms' => $plan->terms(),
+            'starts_at' => now()->subDay(), 'ends_at' => now()->addDay()]);
+        $this->actingAs($owner);
+        $completed = $this->quotaOpportunity($admin);
+        $this->postJson('/opportunities/'.$completed->id.'/projects')->assertRedirect();
+        $owner->projects()->sole()->update(['status' => 'completed', 'started_at' => now(), 'completed_at' => now()]);
+        foreach (['explorer' => $explorers, 'mentor' => $mentors] as $type => $quantity) {
+            for ($index = 0; $index < $quantity; $index++) {
+                $offer = $this->quotaOpportunity($admin);
+                $this->postJson('/opportunities/'.$offer->id.'/projects', ['participation_type' => $type])->assertRedirect();
+            }
+        }
+        $extra = $this->quotaOpportunity($admin);
+        $this->postJson('/opportunities/'.$extra->id.'/projects', ['participation_type' => 'explorer'])
+            ->assertUnprocessable()->assertJsonValidationErrors('membership');
+        $this->actingAs($admin)->postJson('/admin/projects', ['user_id' => $owner->id, 'opportunity_id' => $extra->id, 'participation_type' => 'mentor'])
+            ->assertUnprocessable()->assertJsonValidationErrors('membership');
+        $this->assertSame(7, $owner->projects()->whereIn('status', ['accepted', 'active'])->count());
+    }
+
+    private function quotaOpportunity(User $admin): Opportunity
+    {
+        $category = Category::firstOrCreate(['slug' => 'quota'], ['name' => 'Quota', 'status' => 'active', 'visibility' => 'all']);
+        $offer = Opportunity::create(['category_id' => $category->id, 'title' => 'Proiect pentru verificarea cotei', 'summary' => 'Descriere',
+            'provider' => 'Furnizor', 'terms' => 'Regulament', 'difficulty' => 'Ușor', 'estimated_minutes' => 10, 'status' => 'published',
+            'starts_at' => now()->subDay(), 'reward_label' => 'Beneficiu', 'reward_type' => 'non_cash', 'reward_unit' => 'non_cash',
+            'payer' => 'Furnizor', 'created_by' => $admin->id, 'updated_by' => $admin->id, 'participation_mode' => 'both']);
+        $template = $offer->templates()->create(['title' => 'Confirmare', 'position' => 1, 'required_action' => 'Confirmă',
+            'verification_method' => 'user_declaration', 'xp_points' => 0, 'assign_on_accept' => true, 'is_required' => true, 'status' => 'active']);
+        $template->steps()->create(['title' => 'Pas', 'position' => 1, 'status' => 'active', 'required_action' => 'Confirmă', 'xp_points' => 0]);
+
+        return $offer;
+    }
+
+    #[TestWith([0, 0, 0, 'explorer', false])]
+    #[TestWith([null, 0, null, 'explorer', false])]
+    #[TestWith([null, null, 0, 'mentor', false])]
+    #[TestWith([null, null, null, 'mentor', true])]
+    public function test_zero_and_unlimited_limits_are_enforced_on_acceptance(?int $total, ?int $explorer, ?int $mentor, string $type, bool $allowed): void
+    {
+        $admin = User::factory()->create(['role' => 'super_admin', 'status' => 'active']);
+        $owner = User::factory()->create(['status' => 'active']);
+        $plan = Plan::factory()->create(['max_projects' => $total, 'max_explorer_projects' => $explorer, 'max_mentor_projects' => $mentor]);
+        UserMembership::create(['user_id' => $owner->id, 'plan_id' => $plan->id, 'source' => 'manual', 'terms' => $plan->terms(),
+            'starts_at' => now()->subDay(), 'ends_at' => now()->addDay()]);
+        $completed = $this->quotaOpportunity($admin);
+        $owner->projects()->create(['opportunity_id' => $completed->id, 'title' => $completed->title,
+            'source' => 'self', 'created_by' => $owner->id, 'participation_type' => 'explorer', 'status' => 'completed',
+            'accepted_at' => now()->subDay(), 'started_at' => now()->subDay(), 'completed_at' => now(),
+            'opportunity_version' => 1, 'offer_snapshot' => [], 'eligibility_snapshot' => []]);
+        $offer = $this->quotaOpportunity($admin);
+        $response = $this->actingAs($owner)->postJson('/opportunities/'.$offer->id.'/projects', ['participation_type' => $type]);
+        if ($allowed) {
+            $response->assertRedirect();
+            $this->assertSame(1, $owner->projects()->where('status', 'accepted')->count());
+        } else {
+            $response->assertUnprocessable()->assertJsonValidationErrors('membership');
+            $this->assertSame(0, $owner->projects()->where('status', 'accepted')->count());
+        }
+    }
 
     public function test_expired_codes_and_deactivated_plans_cannot_issue_entitlements(): void
     {
@@ -85,7 +214,7 @@ class SubscriptionInfrastructureTest extends TestCase
         $admin = User::factory()->create(['role' => 'super_admin', 'status' => 'active']);
         $plan = Plan::where('seed_key', 'standard')->sole();
         $this->actingAs($user)->postJson('/subscriptions/trial', ['plan_id' => $plan->id, 'request_key' => Str::uuid()])->assertCreated();
-        $edit = ['name' => 'Standard Plus', 'max_projects' => 1, 'monthly_price_minor' => 2500, 'version' => 1, 'request_key' => Str::uuid()];
+        $edit = ['name' => 'Standard Plus', 'max_projects' => 1, 'max_explorer_projects' => 1, 'max_mentor_projects' => 1, 'monthly_price_minor' => 2500, 'version' => 1, 'request_key' => Str::uuid()];
         $this->patchJson('/admin/plans/'.$plan->id, $edit)->assertForbidden();
         $this->actingAs($admin)->patchJson('/admin/plans/'.$plan->id, $edit)->assertOk()->assertJsonPath('version', 2);
         $this->patchJson('/admin/plans/'.$plan->id, array_merge($edit, ['request_key' => Str::uuid()]))->assertConflict();

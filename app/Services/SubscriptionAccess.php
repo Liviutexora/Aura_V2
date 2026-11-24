@@ -31,9 +31,14 @@ class SubscriptionAccess
         $projects = $user->projects()->whereIn('status', ['accepted', 'active']);
         $totalLimit = $period->terms['max_projects'];
         $typeLimit = $period->terms['max_'.$type.'_projects'];
-        if (($totalLimit !== null && $projects->count() >= $totalLimit)
-            || ($typeLimit !== null && $projects->where('participation_type', $type)->count() >= $typeLimit)) {
-            throw ValidationException::withMessages(['membership' => 'Limita proiectelor simultane a fost atinsă.']);
+        if ($totalLimit !== null && $projects->count() >= $totalLimit) {
+            throw ValidationException::withMessages(['membership' => 'Limita totală de '.$totalLimit.' proiecte simultane a fost atinsă. Proiectele Explorator și Mentor se numără împreună.']);
+        }
+        if ($typeLimit !== null && $projects->where('participation_type', $type)->count() >= $typeLimit) {
+            $label = $type === 'explorer' ? 'Explorator' : 'Mentor';
+            throw ValidationException::withMessages(['membership' => $typeLimit === 0
+                ? 'Planul nu permite proiecte '.$label.'.'
+                : 'Limita de '.$typeLimit.' proiecte '.$label.' simultane a fost atinsă.']);
         }
     }
 

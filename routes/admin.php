@@ -95,6 +95,8 @@ Route::prefix('admin')->name('aura.admin.')->middleware(['auth', 'active', 'supe
     Route::patch('verification/{submission}', [ProjectOperationsController::class, 'review'])->name('verification.review');
     Route::get('/subscriptions', static fn () => $loadAuraAdminDemo('subscriptions'))->name('subscriptions');
     Route::get('/plans/catalog', [SubscriptionAdminController::class, 'plans'])->name('plans.catalog');
+    Route::get('/plans/create', [SubscriptionAdminController::class, 'form'])->name('plans.create');
+    Route::get('/plans/{plan}/edit', [SubscriptionAdminController::class, 'form'])->whereNumber('plan')->name('plans.edit');
     Route::post('/plans', [SubscriptionAdminController::class, 'savePlan'])->name('plans.store');
     Route::patch('/plans/{plan}', [SubscriptionAdminController::class, 'savePlan'])->whereNumber('plan')->name('plans.update');
     Route::get('/subscriptions/periods', [SubscriptionAdminController::class, 'memberships'])->name('subscriptions.periods');
