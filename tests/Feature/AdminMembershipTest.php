@@ -271,4 +271,39 @@ class AdminMembershipTest extends TestCase
             ->assertOk()->assertViewHas('codes', fn ($codes) => $codes->total() === 1 && $codes->first()->membership->user->is($owner))
             ->assertDontSee($receipt->json('code'));
     }
+
+    public function test_user_edit_allows_a_super_admin_to_allocate_the_first_membership(): void
+    {
+        $admin = User::factory()->create(['role' => 'super_admin', 'status' => 'active']);
+        $owner = User::factory()->create(['status' => 'active']);
+        $activePlan = Plan::factory()->create(['name' => 'Plan pentru alocare']);
+        Plan::factory()->create(['name' => 'Plan inactiv ascuns', 'is_active' => false]);
+        $editUrl = route('aura.admin.users.edit', $owner);
+        $grantUrl = route('aura.admin.subscriptions.grant', $owner);
+
+        $page = $this->actingAs($admin)->get($editUrl)->assertOk()
+            ->assertSee('value="Niciun abonament"', false)
+            ->assertSee('Alocă abonament')
+            ->assertSee($grantUrl)
+            ->assertSee('name="_token"', false)
+            ->assertSee('name="request_key"', false)
+            ->assertSee($activePlan->name)
+            ->assertDontSee('Plan inactiv ascuns');
+        preg_match('/name="request_key" value="([^"]+)"/', $page->getContent(), $requestKey);
+        $payload = ['plan_id' => $activePlan->id, 'duration_days' => 30, 'timing' => 'period_end',
+            'reason' => 'Alocare din profilul utilizatorului', 'request_key' => $requestKey[1]];
+
+        $this->postJson($grantUrl, $payload)->assertCreated();
+        $this->postJson($grantUrl, $payload)->assertConflict();
+
+        $membership = UserMembership::sole();
+        $this->assertSame($owner->id, $membership->user_id);
+        $this->assertSame($activePlan->id, $membership->plan_id);
+        $this->assertDatabaseHas('subscription_events', ['type' => 'activated', 'actor_id' => $admin->id,
+            'membership_id' => $membership->id, 'reason' => 'Alocare din profilul utilizatorului']);
+        $this->get($editUrl)->assertOk()
+            ->assertSee('value="Plan pentru alocare"', false)
+            ->assertDontSee('Alocă abonament')
+            ->assertSee(route('aura.admin.subscriptions', ['q' => $owner->email, 'status' => 'active']));
+    }
 }

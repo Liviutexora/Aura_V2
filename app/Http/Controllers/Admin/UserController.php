@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ResetUserPasswordRequest;
+use App\Models\Plan;
 use App\Models\SubscriptionEvent;
 use App\Models\User;
 use App\Models\UserMembership;
@@ -97,8 +98,12 @@ class UserController extends Controller
 
     public function edit(User $user): View
     {
+        $membership = UserMembership::whereBelongsTo($user)->effectiveAt(now())->first();
+
         return view('admin.pages.user-edit', [
             'user' => $user,
+            'membership' => $membership,
+            'activePlans' => $membership === null ? Plan::activeOptions() : collect(),
             'statusLabel' => self::STATUS_LABELS[$user->status] ?? ($user->status ?: '—'),
             ...$this->adminLayoutData('Editează utilizator', 'users/'.$user->getKey().'/edit'),
         ]);
