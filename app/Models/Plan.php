@@ -13,6 +13,12 @@ class Plan extends Model
     protected $guarded = ['id', 'seed_key', 'version'];
 
     /** @return Collection<int, self> */
+    public static function activeCatalog(): Collection
+    {
+        return self::where('is_active', true)->orderBy('access_level')->orderBy('id')->get();
+    }
+
+    /** @return Collection<int, self> */
     public static function activeOptions(): Collection
     {
         return self::where('is_active', true)->orderBy('access_level')->orderBy('id')->get(['id', 'name']);

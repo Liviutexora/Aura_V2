@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -145,7 +146,7 @@ class SubscriptionAdminController extends Controller
 
     public function memberships(): JsonResponse
     {
-        return response()->json(UserMembership::latest('id')->paginate(50));
+        return response()->json(UserMembership::withCancelled()->latest('id')->paginate(50));
     }
 
     private function subscriptionLayout(string $page, string $title): array
@@ -168,16 +169,16 @@ class SubscriptionAdminController extends Controller
         }
 
         $filters = $request->validate([
-            'q' => 'nullable|string|max:255', 'status' => 'nullable|in:active,scheduled,expired',
+            'q' => 'nullable|string|max:255', 'status' => 'nullable|in:active,scheduled,expired,cancelled',
             'range' => 'nullable|in:7,30,90', 'sort' => 'nullable|in:user,plan,source,start,end,status',
             'direction' => 'nullable|in:asc,desc',
         ]);
         $at = CarbonImmutable::now()->startOfSecond();
-        $statusSql = "case when ends_at <= ? then 'expired' when starts_at > ? then 'scheduled' else 'active' end";
+        $statusSql = "case when closed_at < starts_at then 'cancelled' when ends_at <= ? then 'expired' when starts_at > ? then 'scheduled' else 'active' end";
         $columns = ['user' => 'users.name', 'plan' => 'terms->name', 'source' => 'source',
             'start' => 'starts_at', 'end' => 'ends_at', 'status' => 'period_status'];
         $direction = $filters['direction'] ?? 'desc';
-        $periods = UserMembership::join('users', 'users.id', '=', 'user_memberships.user_id')
+        $periods = UserMembership::withCancelled()->join('users', 'users.id', '=', 'user_memberships.user_id')
             ->select(['user_memberships.*', 'users.name as user_name', 'users.email as user_email'])
             ->selectRaw($statusSql.' as period_status', [$at, $at]);
         if (isset($filters['q'])) {
@@ -206,15 +207,37 @@ class SubscriptionAdminController extends Controller
         ]);
     }
 
+    public function cancelScheduled(Request $request, int $period, MembershipService $service): Response|RedirectResponse
+    {
+        $data = $request->validate([
+            'starts_at' => 'required|integer|min:1',
+            'ends_at' => 'required|integer|gt:starts_at',
+            'request_key' => 'required|uuid',
+        ]);
+        $service->cancelScheduled($request->user(), $period, $data['starts_at'], $data['ends_at'], $data['request_key']);
+
+        return $request->expectsJson()
+            ? response()->noContent()
+            : redirect()->back(fallback: route('aura.admin.subscriptions'))->with('period_status', 'Perioada programată a fost anulată.');
+    }
+
     public function events(): JsonResponse
     {
         return response()->json(SubscriptionEvent::auditHistory()->paginate(50));
     }
 
-    public function codes(Request $request): View|JsonResponse
+    public function codes(Request $request): Response|JsonResponse
     {
-        $filters = $request->validate(['q' => 'nullable|string|max:255', 'status' => 'nullable|in:disponibil,utilizat,expirat']);
-        $inventory = SubscriptionPromoCode::inventory($filters['status'] ?? null)
+        $filters = $request->validate(['q' => 'nullable|string|max:255', 'status' => 'nullable|in:disponibil,utilizat,expirat,revocat',
+            'tab' => 'nullable|in:disponibile,arhiva']);
+        $isPage = $request->routeIs('aura.admin.promo-codes');
+        $status = $filters['status'] ?? null;
+        $archiveStatuses = ['utilizat', 'revocat', 'expirat'];
+        $tab = $filters['tab'] ?? (in_array($status, $archiveStatuses, true) ? 'arhiva' : 'disponibile');
+        if ($isPage) {
+            $status = $tab === 'disponibile' ? 'disponibil' : (in_array($status, $archiveStatuses, true) ? $status : 'arhiva');
+        }
+        $inventory = SubscriptionPromoCode::inventory($status)
             ->with(['plan:id,name', 'reservedUser:id,name,email', 'membership:id,user_id', 'membership.user:id,name,email']);
         if (isset($filters['q'])) {
             $term = '%'.$filters['q'].'%';
@@ -222,13 +245,12 @@ class SubscriptionAdminController extends Controller
             $inventory->where(fn (Builder $query) => $query->whereRelation('plan', 'name', 'like', $term)
                 ->orWhereHas('reservedUser', $person)->orWhereHas('membership.user', $person));
         }
-        $isPage = $request->routeIs('aura.admin.promo-codes');
         $codes = $inventory->latest('id')->paginate($isPage ? 6 : 50)->withQueryString();
         if ($isPage) {
-            return view('admin.pages.promo-codes', $this->subscriptionLayout('promo-codes', 'Coduri promoționale') + [
+            return response()->view('admin.pages.promo-codes', $this->subscriptionLayout('promo-codes', 'Coduri promoționale') + [
                 'codes' => $codes, 'filters' => $filters, 'activePlans' => Plan::activeOptions(),
-                'beneficiaries' => User::orderBy('name')->orderBy('id')->get(['id', 'name', 'email']),
-            ]);
+                'tab' => $tab, 'statuses' => $tab === 'arhiva' ? $archiveStatuses : ['disponibil'],
+            ], headers: ['Cache-Control' => 'no-store']);
         }
 
         $codes->getCollection()->each->append('status');
@@ -254,11 +276,38 @@ class SubscriptionAdminController extends Controller
     public function issueCode(Request $request, MembershipService $service): JsonResponse
     {
         $data = $request->validate(['plan_id' => 'required|integer|min:1', 'duration_days' => 'required|integer|between:1,3650',
-            'reserved_user_id' => 'nullable|integer|exists:users,id', 'expires_at' => 'nullable|date|after:now',
-            'reason' => 'nullable|string|max:1000', 'request_key' => 'required|uuid']);
+            'quantity' => 'sometimes|integer|between:1,100', 'reserved_user_id' => 'nullable|integer|exists:users,id',
+            'expires_at' => 'required|date|after:now', 'reason' => 'nullable|string|max:1000', 'request_key' => 'required|uuid']);
+        $codes = $service->issueCodes($request->user(), $data['plan_id'], $data['duration_days'], $data['quantity'] ?? 1,
+            $data['reserved_user_id'] ?? null, CarbonImmutable::parse($data['expires_at']), $data['request_key'], $data['reason'] ?? null);
 
-        return response()->json($service->issueCode($request->user(), $data['plan_id'], $data['duration_days'],
-            $data['reserved_user_id'] ?? null, isset($data['expires_at']) ? CarbonImmutable::parse($data['expires_at']) : null,
-            $data['request_key'], $data['reason'] ?? null), 201, ['Cache-Control' => 'no-store']);
+        return response()->json([
+            'id' => $codes[0]['id'],
+            'code' => $codes[0]['code'],
+            'codes' => $codes,
+        ], 201, ['Cache-Control' => 'no-store']);
+    }
+
+    public function revokeCode(Request $request, SubscriptionPromoCode $promoCode, MembershipService $service): JsonResponse|RedirectResponse
+    {
+        $data = $request->validate(['request_key' => 'required|uuid']);
+        $promo = $service->revokeCode($request->user(), $promoCode, $data['request_key']);
+
+        return $request->expectsJson()
+            ? response()->json($promo->append('status'))
+            : redirect()->back(fallback: route('aura.admin.promo-codes'))->with('promo_status', 'Codul promoțional a fost revocat.');
+    }
+
+    public function deleteCode(Request $request, int $promoCode, MembershipService $service): Response|RedirectResponse
+    {
+        $data = $request->validate([
+            'request_key' => 'required|uuid',
+            'confirm_delete' => 'accepted',
+        ], ['confirm_delete.accepted' => 'Confirmă ștergerea definitivă a cuponului.']);
+        $service->deleteCode($request->user(), $promoCode, $data['request_key']);
+
+        return $request->expectsJson()
+            ? response()->noContent()
+            : redirect()->back(fallback: route('aura.admin.promo-codes'))->with('promo_status', 'Cuponul a fost șters definitiv.');
     }
 }

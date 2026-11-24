@@ -21,13 +21,19 @@
         </select>
     @endisset
 </div>
+@if(session('period_status'))
+    <x-aura-admin::alert :message="session('period_status')" />
+@endif
+@foreach($errors->all() as $error)
+    <x-aura-admin::alert :message="$error" />
+@endforeach
 <x-aura-admin::card class="admin-card">
     @isset($events)
         <x-aura-admin::subscription-history :events="$events" />
     @else
         @php
             $columns = ['user' => 'Utilizator', 'plan' => 'Abonament', 'source' => 'Sursă', 'start' => 'Activare', 'end' => 'Expirare', 'status' => 'Stare'];
-            $statuses = ['active' => 'Activ', 'expired' => 'Expirat', 'scheduled' => 'Programat'];
+            $statuses = ['active' => 'Activ', 'expired' => 'Expirat', 'scheduled' => 'Programat', 'cancelled' => 'Anulat'];
         @endphp
         <form class="toolbar" id="subscription-filter" method="GET" action="{{ route('aura.admin.subscriptions') }}">
             <input type="search" name="q" maxlength="255" aria-label="Caută în tabel" placeholder="Caută după nume, email sau plan…" value="{{ $filters['q'] ?? '' }}">
@@ -68,6 +74,13 @@
                         <td><div class="actions">
                             <a class="icon-button" href="{{ route('aura.admin.users.show', ['user' => $period->user_id, 'tab' => 'subscription']) }}" aria-label="Istoric pentru {{ $period->user_name }}"><x-aura-admin::icon name="eye" /></a>
                             <a class="icon-button" href="{{ route('aura.admin.subscriptions', $filters + ['page' => $periods->currentPage(), 'manage_user' => $period->user_id]) }}" title="Schimbă planul" aria-label="Schimbă planul pentru {{ $period->user_name }}"><x-aura-admin::icon name="edit" /></a>
+                            @if($period->period_status === 'scheduled')
+                                <button class="icon-button" type="button" title="Anulează" aria-label="Anulează perioada programată pentru {{ $period->user_name }}"
+                                    aria-haspopup="dialog" data-cancel-period="{{ route('aura.admin.subscriptions.periods.cancel', $period) }}"
+                                    data-user="{{ $period->user_name }}" data-plan="{{ $period->terms['name'] }}"
+                                    data-range="{{ $period->starts_at->format('d.m.Y H:i T') }} – {{ $period->ends_at->format('d.m.Y H:i T') }}"
+                                    data-start="{{ $period->starts_at->timestamp }}" data-end="{{ $period->ends_at->timestamp }}">×</button>
+                            @endif
                         </div></td>
                     </tr>
                 @endforeach
@@ -79,6 +92,27 @@
         @endif
     @endisset
 </x-aura-admin::card>
+@isset($periods)
+    @if($periods->contains('period_status', 'scheduled'))
+        <dialog class="admin-dialog" id="cancel-period-dialog" aria-labelledby="cancel-period-title">
+            <h2 id="cancel-period-title">Anulează perioada programată</h2>
+            <p><b data-cancel-user></b> · <span data-cancel-plan></span></p>
+            <p data-cancel-range></p>
+            <form method="POST">
+                @csrf
+                @method('PATCH')
+                <input type="hidden" name="request_key" value="{{ (string) \Illuminate\Support\Str::uuid() }}">
+                <input type="hidden" name="starts_at">
+                <input type="hidden" name="ends_at">
+                <div class="form-actions">
+                    <button type="submit" class="btn admin-btn">Confirmă anularea</button>
+                    <button type="button" class="btn admin-btn secondary" data-dismiss-cancellation autofocus>Înapoi</button>
+                </div>
+            </form>
+        </dialog>
+    @endif
+    <script src="{{ asset('assets/admin/memberships.js') }}" defer></script>
+@endisset
 @isset($recipient)
     <template id="subscription-form-template" data-auto-open>
         <h2 id="subscription-dialog-title">Schimbă planul</h2>
@@ -116,6 +150,5 @@
         <h2 id="subscription-dialog-title">Abonamentul a fost salvat</h2>
         <div class="form-actions"><button type="button" class="btn admin-btn" data-close>Înapoi la abonamente</button></div>
     </template>
-    <script src="{{ asset('assets/admin/memberships.js') }}" defer></script>
 @endisset
 @endsection

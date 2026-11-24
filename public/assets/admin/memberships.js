@@ -1,4 +1,23 @@
 (() => {
+    const dialog = document.getElementById('cancel-period-dialog');
+    if (!dialog) return;
+
+    const form = dialog.querySelector('form');
+    document.querySelectorAll('[data-cancel-period]').forEach(button => {
+        button.addEventListener('click', () => {
+            form.action = button.dataset.cancelPeriod;
+            form.elements.starts_at.value = button.dataset.start;
+            form.elements.ends_at.value = button.dataset.end;
+            dialog.querySelector('[data-cancel-user]').textContent = button.dataset.user;
+            dialog.querySelector('[data-cancel-plan]').textContent = button.dataset.plan;
+            dialog.querySelector('[data-cancel-range]').textContent = button.dataset.range;
+            dialog.showModal();
+        });
+    });
+    dialog.querySelector('[data-dismiss-cancellation]').addEventListener('click', () => dialog.close());
+})();
+
+(() => {
     const dialog = document.getElementById('admin-dialog');
     const template = document.getElementById('subscription-form-template');
     if (!dialog || !template) return;
@@ -60,7 +79,7 @@
             if (form.hasAttribute('data-issue-code')) {
                 dialog.replaceChildren(document.getElementById('issued-code-template').content.cloneNode(true));
                 const field = dialog.querySelector('#issued-promo-code');
-                field.value = payload.code;
+                field.value = (payload.codes || [{code: payload.code}]).map(item => item.code).join('\n');
                 dialog.querySelector('[data-copy-code]').addEventListener('click', () => copyCode(field));
                 field.focus();
             } else {
@@ -89,6 +108,24 @@
             field.select();
             status.textContent = 'Copiază manual codul selectat.';
             if (document.execCommand?.('copy')) status.textContent = 'Cod copiat.';
+        }
+    }
+
+    async function copyValue(value) {
+        try {
+            await navigator.clipboard.writeText(value);
+            return true;
+        } catch {
+            const field = document.createElement('textarea');
+            field.value = value;
+            field.setAttribute('readonly', '');
+            field.style.position = 'fixed';
+            field.style.opacity = '0';
+            document.body.appendChild(field);
+            field.select();
+            const copied = document.execCommand?.('copy') === true;
+            field.remove();
+            return copied;
         }
     }
 
@@ -122,5 +159,25 @@
     });
 
     document.querySelector('[data-open-subscription-form]')?.addEventListener('click', openForm);
+    document.querySelectorAll('[data-delete-promo]').forEach(form => {
+        form.addEventListener('submit', event => {
+            if (!window.confirm('Ștergi definitiv acest cupon? Operațiunea nu poate fi anulată.')) {
+                event.preventDefault();
+                return;
+            }
+            form.elements.confirm_delete.value = '1';
+            if (event.submitter) event.submitter.disabled = true;
+        });
+    });
+    document.querySelectorAll('[data-copy-promo]').forEach(button => {
+        button.addEventListener('click', async () => {
+            if (await copyValue(button.dataset.copyPromo)) {
+                button.textContent = 'Copiat';
+                window.setTimeout(() => { button.textContent = 'Copiază'; }, 1500);
+            } else {
+                button.textContent = 'Copiere indisponibilă';
+            }
+        });
+    });
     if (template.hasAttribute('data-auto-open')) openForm();
 })();

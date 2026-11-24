@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Route;
 
 // UI-only preview routes. Replace with authenticated controllers before production.
 Route::get('/', [ProjectController::class, 'landing'])->name('aura.home');
+Route::get('/subscriptions/select/{plan}', [SubscriptionController::class, 'select'])->whereNumber('plan')->name('aura.subscriptions.select');
 Route::get('/pricing', fn () => view('public.pricing', ['demoRoute' => 'pricing']))->name('aura.pricing');
 Route::middleware(['auth', 'active', 'verified:aura.verify-email'])->group(function (): void {
     Route::get('/dashboard', [ProjectController::class, 'dashboard'])->name('aura.dashboard');

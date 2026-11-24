@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\ExternalEarning;
 use App\Models\Opportunity;
+use App\Models\Plan;
 use App\Models\Project;
 use App\Models\ProjectMission;
 use App\Models\User;
@@ -118,7 +119,7 @@ class ProjectController extends Controller
             'offers' => $this->catalog->published(maxAccessLevel: 1)->orderByDesc('is_featured')->latest('id')->limit(3)->get(),
         ];
 
-        return view('public.landing', $data + ['demoRoute' => 'home', 'publicOnly' => ! $request->user()]);
+        return view('public.landing', $data + ['demoRoute' => 'home', 'publicOnly' => ! $request->user(), 'activePlans' => Plan::activeCatalog()]);
     }
 
     public function dashboard(Request $request): View

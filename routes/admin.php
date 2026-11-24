@@ -100,11 +100,17 @@ Route::prefix('admin')->name('aura.admin.')->middleware(['auth', 'active', 'supe
     Route::post('/plans', [SubscriptionAdminController::class, 'savePlan'])->name('plans.store');
     Route::patch('/plans/{plan}', [SubscriptionAdminController::class, 'savePlan'])->whereNumber('plan')->name('plans.update');
     Route::get('/subscriptions/periods', [SubscriptionAdminController::class, 'memberships'])->name('subscriptions.periods');
+    Route::patch('/subscriptions/periods/{period}/cancel', [SubscriptionAdminController::class, 'cancelScheduled'])
+        ->whereNumber('period')->name('subscriptions.periods.cancel');
     Route::get('/subscriptions/history', [SubscriptionAdminController::class, 'events'])->name('subscriptions.history');
     Route::get('/subscriptions/codes', [SubscriptionAdminController::class, 'codes'])->name('subscriptions.codes');
     Route::get('/promo-codes', [SubscriptionAdminController::class, 'codes'])->name('promo-codes');
     Route::post('/users/{user}/memberships', [SubscriptionAdminController::class, 'grant'])->name('subscriptions.grant');
     Route::post('/subscriptions/codes', [SubscriptionAdminController::class, 'issueCode'])->name('subscriptions.codes.store');
+    Route::patch('/subscriptions/codes/{promoCode}/revoke', [SubscriptionAdminController::class, 'revokeCode'])
+        ->whereNumber('promoCode')->name('subscriptions.codes.revoke');
+    Route::delete('/subscriptions/codes/{promoCode}', [SubscriptionAdminController::class, 'deleteCode'])
+        ->whereNumber('promoCode')->name('subscriptions.codes.destroy');
     Route::get('/levels', static fn () => $loadAuraAdminDemo('levels'))->name('levels');
     Route::get('/xprules', static fn () => $loadAuraAdminDemo('xprules'))->name('xprules');
     Route::get('/achievements', static fn () => $loadAuraAdminDemo('achievements'))->name('achievements');

@@ -1,0 +1,18 @@
+.catalog.plan-track {
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: calc((100% - 36px) / 3);
+    gap: 18px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+}
+.plan-track > article { min-width: 0; overflow-wrap: anywhere; scroll-snap-align: start; }
+.plan-controls { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+#activation-dialog { max-height: 90vh; overflow: auto; }
+#activation-dialog form { display: grid; gap: 12px; }
+#activation-dialog .plan-close { float: right; }
+#activation-dialog input[type=radio], #activation-dialog input[type=checkbox] { width: auto; }
+.plan-controls[hidden], #activation-dialog [hidden] { display: none; }
+@media (max-width: 760px) {
+    .catalog.plan-track { grid-auto-columns: 100%; }
+}

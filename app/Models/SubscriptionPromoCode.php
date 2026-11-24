@@ -11,7 +11,7 @@ class SubscriptionPromoCode extends Model
 {
     protected $guarded = ['id'];
 
-    protected $hidden = ['code_hash'];
+    protected $hidden = ['code_hash', 'encrypted_code'];
 
     public function reservedUser(): BelongsTo
     {
@@ -20,7 +20,12 @@ class SubscriptionPromoCode extends Model
 
     public function membership(): BelongsTo
     {
-        return $this->belongsTo(UserMembership::class);
+        return $this->belongsTo(UserMembership::class)->withCancelled();
+    }
+
+    public function revoker(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'revoked_by');
     }
 
     public function plan(): BelongsTo
@@ -30,13 +35,16 @@ class SubscriptionPromoCode extends Model
 
     public function scopeInventory(Builder $query, ?string $status = null): Builder
     {
-        $query->select(['id', 'plan_id', 'duration_days', 'expires_at', 'reserved_user_id', 'membership_id',
-            'redeemed_at', 'created_by', 'created_at', 'updated_at']);
+        $query->select(['id', 'encrypted_code', 'plan_id', 'duration_days', 'expires_at', 'reserved_user_id',
+            'membership_id', 'redeemed_at', 'revoked_at', 'revoked_by', 'created_by', 'created_at', 'updated_at']);
 
         return match ($status) {
+            'arhiva' => $query->where(fn (Builder $archived) => $archived->whereNotNull('redeemed_at')
+                ->orWhereNotNull('revoked_at')->orWhere('expires_at', '<=', now())),
             'utilizat' => $query->whereNotNull('redeemed_at'),
-            'expirat' => $query->whereNull('redeemed_at')->where('expires_at', '<=', now()),
-            'disponibil' => $query->whereNull('redeemed_at')
+            'revocat' => $query->whereNull('redeemed_at')->whereNotNull('revoked_at'),
+            'expirat' => $query->whereNull('redeemed_at')->whereNull('revoked_at')->where('expires_at', '<=', now()),
+            'disponibil' => $query->whereNull('redeemed_at')->whereNull('revoked_at')
                 ->where(fn (Builder $expiry) => $expiry->whereNull('expires_at')->orWhere('expires_at', '>', now())),
             default => $query,
         };
@@ -46,6 +54,7 @@ class SubscriptionPromoCode extends Model
     {
         return Attribute::get(fn (): string => match (true) {
             $this->redeemed_at !== null => 'utilizat',
+            $this->revoked_at !== null => 'revocat',
             $this->expires_at?->lessThanOrEqualTo(now()) === true => 'expirat',
             default => 'disponibil',
         });
@@ -53,6 +62,11 @@ class SubscriptionPromoCode extends Model
 
     protected function casts(): array
     {
-        return ['expires_at' => 'immutable_datetime', 'redeemed_at' => 'immutable_datetime'];
+        return [
+            'encrypted_code' => 'encrypted',
+            'expires_at' => 'immutable_datetime',
+            'redeemed_at' => 'immutable_datetime',
+            'revoked_at' => 'immutable_datetime',
+        ];
     }
 }

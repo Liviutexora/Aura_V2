@@ -7,11 +7,25 @@ use App\Models\UserMembership;
 use App\Services\MembershipService;
 use App\Services\SubscriptionAccess;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class SubscriptionController extends Controller
 {
+    public function select(Request $request, Plan $plan): RedirectResponse
+    {
+        abort_unless($plan->is_active, 404);
+        $request->session()->put('subscriptions.selected_plan', $plan->id);
+        if (! $request->user()) {
+            redirect()->setIntendedUrl(route('aura.subscriptions'));
+
+            return redirect()->route('aura.register');
+        }
+
+        return redirect()->route('aura.subscriptions');
+    }
+
     public function show(Request $request, SubscriptionAccess $access): View
     {
         $user = $request->user()->refresh();
@@ -26,9 +40,12 @@ class SubscriptionController extends Controller
             ? Plan::where('is_active', true)->where('trial_days', '>', 0)
                 ->orderBy('access_level')->orderBy('id')->first()
             : null;
+        $activePlans = Plan::activeCatalog();
 
         return view('subscriptions.index', [
             'demoRoute' => 'subscriptions',
+            'activePlans' => $activePlans,
+            'selectedPlanId' => $request->session()->pull('subscriptions.selected_plan'),
             'currentMembership' => $current,
             'scheduledMembership' => $scheduled,
             'trialPlan' => $trialPlan,
@@ -42,7 +59,7 @@ class SubscriptionController extends Controller
         $periods = UserMembership::where('user_id', $user->id);
 
         return response()->json([
-            'plans' => Plan::where('is_active', true)->orderBy('access_level')->orderBy('id')->get(),
+            'plans' => Plan::activeCatalog(),
             'current' => $access->current($user),
             'trial_available' => ! $user->trial_used_at && ! (clone $periods)->where('ends_at', '>', now())->exists()
                 && Plan::where('is_active', true)->where('trial_days', '>', 0)->exists(),
@@ -59,8 +76,18 @@ class SubscriptionController extends Controller
 
     public function redeem(Request $request, MembershipService $service): JsonResponse
     {
-        $data = $request->validate(['code' => 'required|string|size:40', 'timing' => 'required|in:now,period_end', 'request_key' => 'required|uuid']);
+        $data = $request->validate([
+            'code' => ['required', 'string', 'regex:/\A(?:[A-Za-z0-9]{9}|[A-Fa-f0-9]{40})\z/'],
+            'plan_id' => ['required', 'integer', 'min:1'],
+            'interval' => ['sometimes', 'required', 'in:monthly,quarterly'],
+            'method' => ['sometimes', 'in:coupon'],
+            'confirm_replace_membership_id' => ['nullable', 'integer', 'min:1', 'prohibited_unless:timing,now'],
+            'confirm_replace_ends_at' => ['nullable', 'integer', 'min:1'],
+            'timing' => ['required', 'in:now,period_end'],
+            'request_key' => ['required', 'uuid'],
+        ]);
 
-        return response()->json($service->redeem($request->user(), $data['code'], $data['timing'], $data['request_key']), 201);
+        return response()->json($service->redeem($request->user(), $data['code'], $data['plan_id'], $data['timing'], $data['request_key'],
+            $data['confirm_replace_membership_id'] ?? null, $data['confirm_replace_ends_at'] ?? null), 201);
     }
 }

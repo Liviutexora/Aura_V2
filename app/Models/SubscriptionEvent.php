@@ -19,7 +19,7 @@ class SubscriptionEvent extends Model
 
     public function membership(): BelongsTo
     {
-        return $this->belongsTo(UserMembership::class);
+        return $this->belongsTo(UserMembership::class)->withCancelled();
     }
 
     public function promoCode(): BelongsTo
@@ -38,7 +38,9 @@ class SubscriptionEvent extends Model
             'promoCode.reservedUser:id,name,email', 'plan:id,name'])
             ->when($user, fn (Builder $events) => $events->where(fn (Builder $events) => $events
                 ->whereRelation('membership', 'user_id', $user->id)
-                ->orWhereRelation('promoCode', 'reserved_user_id', $user->id)))
+                ->orWhereRelation('promoCode', 'reserved_user_id', $user->id)
+                ->orWhere(fn (Builder $events) => $events->whereNotNull('details->deleted_promo_code_id')
+                    ->where('details->reserved_user_id', $user->id))))
             ->orderByDesc('occurred_at')->orderByDesc('id');
     }
 
@@ -52,8 +54,11 @@ class SubscriptionEvent extends Model
             'change_scheduled' => 'Schimbare programată',
             'replaced' => 'Înlocuire perioadă activă',
             'rescheduled' => 'Reprogramare perioadă',
+            'cancelled' => 'Anulare perioadă programată',
             'expired' => 'Expirare',
             'promo_issued' => 'Generare cod promoțional',
+            'promo_revoked' => 'Revocare cod promoțional',
+            'promo_deleted' => 'Ștergere definitivă cod promoțional',
             'plan_created' => 'Creare plan',
             'plan_updated' => 'Editare plan',
             default => $this->type,

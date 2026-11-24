@@ -39,6 +39,11 @@ class EmailVerificationController extends Controller
 
         $request->user()->refresh();
         $request->session()->regenerate();
+        if ($request->session()->has('subscriptions.selected_plan')) {
+            $request->session()->forget('url.intended');
+
+            return redirect()->route('aura.subscriptions');
+        }
 
         return redirect()->route('aura.verify-email')->with('status', 'Adresa ta de email a fost verificată.');
     }

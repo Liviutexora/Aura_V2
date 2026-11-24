@@ -155,7 +155,7 @@ class SubscriptionInfrastructureTest extends TestCase
         $owner = User::factory()->create(['status' => 'active']);
         $issue = ['plan_id' => $plan->id, 'duration_days' => 7, 'expires_at' => now()->addDay(), 'request_key' => Str::uuid()];
         $code = $this->actingAs($admin)->postJson('/admin/subscriptions/codes', $issue)->assertCreated()->json('code');
-        $redeem = ['code' => $code, 'timing' => 'now', 'request_key' => Str::uuid()];
+        $redeem = ['plan_id' => $plan->id, 'code' => $code, 'timing' => 'now', 'request_key' => Str::uuid()];
         $this->patchJson('/admin/plans/'.$plan->id, ['is_active' => false, 'version' => 1, 'request_key' => Str::uuid()])->assertOk();
         $this->actingAs($owner)->postJson('/subscriptions/redeem', $redeem)->assertConflict();
         $this->postJson('/subscriptions/trial', ['plan_id' => $plan->id, 'request_key' => Str::uuid()])->assertConflict();
@@ -163,7 +163,7 @@ class SubscriptionInfrastructureTest extends TestCase
         $this->travel(2)->days();
         $this->actingAs($owner)->postJson('/subscriptions/redeem', $redeem)->assertUnprocessable()->assertJsonValidationErrors('code');
         $this->assertDatabaseCount('user_memberships', 0);
-        $this->assertDatabaseHas('subscription_promo_codes', ['code_hash' => hash('sha256', $code), 'redeemed_at' => null]);
+        $this->assertDatabaseHas('subscription_promo_codes', ['code_hash' => hash('sha256', strtolower($code)), 'redeemed_at' => null]);
     }
 
     public function test_enrollment_checks_the_owner_level_and_both_quotas_and_expiry_stops_mentor_referrals(): void
@@ -251,7 +251,7 @@ class SubscriptionInfrastructureTest extends TestCase
         $this->postJson($url, $manual)->assertConflict();
         $code = $this->postJson('/admin/subscriptions/codes', ['plan_id' => $premium->id, 'duration_days' => 20, 'reserved_user_id' => $owner->id,
             'expires_at' => now()->addDay(), 'request_key' => Str::uuid()])->assertCreated()->json('code');
-        $redeem = ['code' => $code, 'timing' => 'period_end', 'request_key' => Str::uuid()];
+        $redeem = ['plan_id' => $premium->id, 'code' => $code, 'timing' => 'period_end', 'request_key' => Str::uuid()];
         $this->actingAs($other)->postJson('/subscriptions/redeem', $redeem)->assertUnprocessable();
         $this->actingAs($owner)->postJson('/subscriptions/redeem', $redeem)->assertCreated();
         $this->postJson('/subscriptions/redeem', array_merge($redeem, ['request_key' => Str::uuid()]))->assertUnprocessable();

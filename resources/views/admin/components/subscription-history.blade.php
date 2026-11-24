@@ -5,13 +5,14 @@
         @php
             $beneficiary = $event->membership?->user ?? $event->promoCode?->reservedUser;
             $planName = $event->membership?->terms['name'] ?? $event->details['after']['name'] ?? $event->plan?->name;
+            $promoCodeId = $event->promo_code_id ?? $event->details['deleted_promo_code_id'] ?? null;
         @endphp
         <div class="event">
             <time datetime="{{ $event->occurred_at->toIso8601String() }}">{{ $event->occurred_at->format('d.m.Y H:i:s') }}</time>
             <span>
                 <b>{{ $event->operationLabel() }}</b> · {{ $planName }}
                 @if($event->membership) · {{ $event->membership->sourceLabel() }} · Perioada #{{ $event->membership_id }} @endif
-                @if($event->promo_code_id) · Cod promoțional #{{ $event->promo_code_id }} @endif
+                @if($promoCodeId) · Cod promoțional #{{ $promoCodeId }} @endif
                 @if($beneficiary)<br>Beneficiar · {{ $beneficiary->name }} ({{ $beneficiary->email }})@endif
                 <br>{{ $event->actor ? 'Efectuat de '.$event->actor->name.' ('.$event->actor->email.')' : 'Efectuat de sistem' }}
                 @if($event->reason !== null)<br>Motiv · {{ $event->reason }}@endif
