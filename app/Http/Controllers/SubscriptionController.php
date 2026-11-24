@@ -8,9 +8,34 @@ use App\Services\MembershipService;
 use App\Services\SubscriptionAccess;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class SubscriptionController extends Controller
 {
+    public function show(Request $request, SubscriptionAccess $access): View
+    {
+        $user = $request->user()->refresh();
+        $current = $access->current($user);
+        $scheduled = UserMembership::whereBelongsTo($user)
+            ->where('starts_at', '>', now())
+            ->orderBy('starts_at')
+            ->orderBy('id')
+            ->first();
+        $hasFutureMembership = $current !== null || $scheduled !== null;
+        $trialPlan = ! $user->trial_used_at && ! $hasFutureMembership
+            ? Plan::where('is_active', true)->where('trial_days', '>', 0)
+                ->orderBy('access_level')->orderBy('id')->first()
+            : null;
+
+        return view('subscriptions.index', [
+            'demoRoute' => 'subscriptions',
+            'currentMembership' => $current,
+            'scheduledMembership' => $scheduled,
+            'trialPlan' => $trialPlan,
+            'remainingDays' => $current ? (int) ceil(now()->diffInDays($current->ends_at)) : null,
+        ]);
+    }
+
     public function overview(Request $request, SubscriptionAccess $access): JsonResponse
     {
         $user = $request->user()->refresh();
