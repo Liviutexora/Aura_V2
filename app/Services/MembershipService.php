@@ -28,9 +28,10 @@ class MembershipService
         }, 3);
     }
 
-    public function manual(User $admin, User $user, int $planId, int $days, string $timing, string $reason, string $key): UserMembership
+    public function manual(User $admin, User $user, int $planId, int $days, string $timing, string $reason, string $key,
+        ?int $confirmedReplacementId = null): UserMembership
     {
-        return DB::transaction(function () use ($admin, $user, $planId, $days, $timing, $reason, $key): UserMembership {
+        return DB::transaction(function () use ($admin, $user, $planId, $days, $timing, $reason, $key, $confirmedReplacementId): UserMembership {
             $admin = $this->lockUser($admin);
             abort_unless($admin->isSuperAdmin(), 403);
             abort_if(trim($reason) === '', 422);
@@ -38,14 +39,15 @@ class MembershipService
 
             $recipient = User::lockForUpdate()->findOrFail($user->id);
 
-            return $this->grant($recipient, $this->availablePlan($planId), $days, 'manual', $timing, $admin, $key, $reason);
+            return $this->grant($recipient, $this->availablePlan($planId), $days, 'manual', $timing, $admin, $key, $reason,
+                confirmedReplacementId: $confirmedReplacementId);
         }, 3);
     }
 
     /** @return array{id:int, code:string} */
-    public function issueCode(User $admin, int $planId, int $days, ?int $reservedUserId, ?CarbonImmutable $expiresAt, string $key): array
+    public function issueCode(User $admin, int $planId, int $days, ?int $reservedUserId, ?CarbonImmutable $expiresAt, string $key, ?string $reason = null): array
     {
-        return DB::transaction(function () use ($admin, $planId, $days, $reservedUserId, $expiresAt, $key): array {
+        return DB::transaction(function () use ($admin, $planId, $days, $reservedUserId, $expiresAt, $key, $reason): array {
             $admin = $this->lockUser($admin);
             abort_unless($admin->isSuperAdmin(), 403);
             $this->requireNewRequest($admin, $key);
@@ -54,7 +56,7 @@ class MembershipService
             $code = bin2hex(random_bytes(20));
             $promo = SubscriptionPromoCode::create(['code_hash' => hash('sha256', $code), 'plan_id' => $plan->id,
                 'duration_days' => $days, 'reserved_user_id' => $reservedUserId, 'expires_at' => $expiresAt?->utc(), 'created_by' => $admin->id]);
-            SubscriptionEvent::record('promo_issued', $plan->id, $admin, $key, promo: $promo,
+            SubscriptionEvent::record('promo_issued', $plan->id, $admin, $key, promo: $promo, reason: $reason,
                 details: $promo->only('reserved_user_id', 'duration_days', 'expires_at'));
 
             return ['id' => $promo->id, 'code' => $code];
@@ -100,7 +102,7 @@ class MembershipService
     }
 
     private function grant(User $owner, Plan $plan, int $days, string $source, string $timing, User $actor, string $key,
-        ?string $reason = null, ?SubscriptionPromoCode $promo = null): UserMembership
+        ?string $reason = null, ?SubscriptionPromoCode $promo = null, ?int $confirmedReplacementId = null): UserMembership
     {
         abort_unless($days > 0 && $days <= 3650 && in_array($timing, ['now', 'period_end'], true), 422);
         $now = CarbonImmutable::now()->startOfSecond();
@@ -110,14 +112,22 @@ class MembershipService
         $start = $now;
         $operation = 'activated';
 
+        if ($confirmedReplacementId !== null && $current?->id !== $confirmedReplacementId) {
+            throw ValidationException::withMessages(['confirm_replace_membership_id' => 'Perioada activă s-a schimbat. Verifică din nou abonamentul înainte de confirmare.']);
+        }
+
         if ($current) {
-            $upgrade = $plan->id !== $current->plan_id && $plan->access_level > $current->terms['access_level'];
-            if ($upgrade && $timing === 'now') {
+            $changingPlan = $plan->id !== $current->plan_id;
+            $higherLevel = $plan->access_level > $current->terms['access_level'];
+            if ($changingPlan && $timing === 'now' && ($source === 'manual' || $higherLevel)) {
+                if ($source === 'manual' && $confirmedReplacementId === null) {
+                    throw ValidationException::withMessages(['confirm_replace_membership_id' => 'Confirmă explicit pierderea perioadei rămase pentru schimbarea imediată.']);
+                }
                 $oldEnd = $current->ends_at;
                 $current->update(['ends_at' => $now, 'closed_at' => $now]);
                 SubscriptionEvent::record('replaced', $current->plan_id, $actor, membership: $current, reason: $reason,
                     details: ['previous_end' => $oldEnd, 'effective_end' => $now]);
-                $operation = 'upgraded';
+                $operation = $higherLevel ? 'upgraded' : 'plan_changed';
             } else {
                 $start = $current->ends_at;
                 $operation = $current->plan_id === $plan->id ? 'extended' : 'change_scheduled';

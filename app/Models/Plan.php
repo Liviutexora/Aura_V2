@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -10,6 +11,12 @@ class Plan extends Model
     use HasFactory;
 
     protected $guarded = ['id', 'seed_key', 'version'];
+
+    /** @return Collection<int, self> */
+    public static function activeOptions(): Collection
+    {
+        return self::where('is_active', true)->orderBy('access_level')->orderBy('id')->get(['id', 'name']);
+    }
 
     protected function casts(): array
     {

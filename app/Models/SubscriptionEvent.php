@@ -2,13 +2,63 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class SubscriptionEvent extends Model
 {
     public $timestamps = false;
 
     protected $guarded = ['id'];
+
+    public function actor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'actor_id');
+    }
+
+    public function membership(): BelongsTo
+    {
+        return $this->belongsTo(UserMembership::class);
+    }
+
+    public function promoCode(): BelongsTo
+    {
+        return $this->belongsTo(SubscriptionPromoCode::class);
+    }
+
+    public function plan(): BelongsTo
+    {
+        return $this->belongsTo(Plan::class);
+    }
+
+    public function scopeAuditHistory(Builder $query, ?User $user = null): Builder
+    {
+        return $query->with(['actor:id,name,email', 'membership.user:id,name,email',
+            'promoCode.reservedUser:id,name,email', 'plan:id,name'])
+            ->when($user, fn (Builder $events) => $events->where(fn (Builder $events) => $events
+                ->whereRelation('membership', 'user_id', $user->id)
+                ->orWhereRelation('promoCode', 'reserved_user_id', $user->id)))
+            ->orderByDesc('occurred_at')->orderByDesc('id');
+    }
+
+    public function operationLabel(): string
+    {
+        return match ($this->type) {
+            'activated' => 'Activare',
+            'extended' => 'Prelungire',
+            'upgraded' => 'Upgrade imediat',
+            'plan_changed' => 'Schimbare imediată',
+            'change_scheduled' => 'Schimbare programată',
+            'replaced' => 'Înlocuire perioadă activă',
+            'rescheduled' => 'Reprogramare perioadă',
+            'expired' => 'Expirare',
+            'promo_issued' => 'Generare cod promoțional',
+            'plan_created' => 'Creare plan',
+            'plan_updated' => 'Editare plan',
+            default => $this->type,
+        };
+    }
 
     protected function casts(): array
     {

@@ -8,7 +8,7 @@
 </head><body><div id="admin-app">
 @include('admin.components.topbar')
 @include('admin.components.sidebar')
-<main class="admin-main"><div class="crumb"><span>Aura Admin / {{ $pageTitle ?? 'Administrare' }}</span><span class="demo">{{ ($auraAdminDemo ?? false) ? 'DATE ȘI ACȚIUNI DEMO' : (($projectAdmin ?? false) || ($realPlanForm ?? false) ? 'DATE REALE' : 'DATE REALE · DOAR CITIRE') }}</span></div>
+<main class="admin-main"><div class="crumb"><span>Aura Admin / {{ $pageTitle ?? 'Administrare' }}</span><span class="demo">{{ ($auraAdminDemo ?? false) ? 'DATE ȘI ACȚIUNI DEMO' : (($projectAdmin ?? false) || ($realPlanForm ?? false) || in_array($demoPage ?? '', ['subscriptions', 'promo-codes'], true) ? 'DATE REALE' : 'DATE REALE · DOAR CITIRE') }}</span></div>
 @if($projectAdmin ?? false)
 @if(session('status'))<div class="admin-notice" role="status">{{ session('status') }}</div>@endif
 @if($errors->any())<div class="admin-notice error-state" role="alert">@foreach($errors->all() as $error)<p>{{ $error }}</p>@endforeach</div>@endif
@@ -20,6 +20,8 @@
 <script>window.AURA_ADMIN_ASSET_BASE = @json(asset('assets/admin')); window.AURA_ADMIN_INITIAL_ROUTE = @json($demoPage ?? 'dashboard'); window.AURA_ADMIN_SERVER_RENDERED = @json($auraAdminServerRendered ?? false); window.AURA_ADMIN_DEMO = @json($auraAdminDemo ?? false); window.AURA_USER_DASHBOARD_URL = @json(route('aura.dashboard'));</script>
 @php
 $adminRealRouteMap = [
+    'subscriptions' => ['index' => route('aura.admin.subscriptions')],
+    'promo-codes' => ['index' => route('aura.admin.promo-codes')],
     'dashboard' => ['index' => route('aura.admin.dashboard')],
     'users' => ['index' => route('aura.admin.users'), 'show' => route('aura.admin.users.show', ['user' => '__AURA_RECORD__']), 'edit' => route('aura.admin.users.edit', ['user' => '__AURA_RECORD__'])],
     'opportunities' => ['index' => route('aura.admin.opportunities'), 'create' => route('aura.admin.opportunities.create'), 'show' => route('aura.admin.opportunities.show', ['record' => '__AURA_RECORD__']), 'edit' => route('aura.admin.opportunities.edit', ['record' => '__AURA_RECORD__'])],
@@ -31,7 +33,7 @@ $adminRealRouteMap = [
     'verification' => ['index' => route('aura.admin.verification'), 'show' => route('aura.admin.verification.show', ['submission' => '__AURA_RECORD__'])],
 ];
 $demoAdminRouteNames = [
-    'subscriptions', 'levels', 'xprules', 'achievements', 'transactions', 'commissions', 'payouts',
+    'levels', 'xprules', 'achievements', 'transactions', 'commissions', 'payouts',
     'referrals', 'referral-rules', 'conversions', 'links', 'events', 'notifications', 'announcements',
     'messageTemplates', 'plans', 'audit', 'analytics', 'financial-reports', 'activity', 'gamification',
     'progress', 'wallet', 'integrations', 'integration-config', 'delivery-log', 'roles', 'settings',

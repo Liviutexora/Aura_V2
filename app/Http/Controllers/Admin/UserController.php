@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ResetUserPasswordRequest;
+use App\Models\SubscriptionEvent;
 use App\Models\User;
+use App\Models\UserMembership;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -75,7 +77,7 @@ class UserController extends Controller
         ]);
     }
 
-    public function show(User $user): View
+    public function show(Request $request, User $user): View
     {
         $user->load([
             'profile:id,user_id,phone,locale,timezone',
@@ -84,6 +86,9 @@ class UserController extends Controller
 
         return view('admin.pages.user-show', [
             'user' => $user,
+            'membership' => UserMembership::whereBelongsTo($user)->effectiveAt(now())->first(),
+            'subscriptionEvents' => $request->query('tab') === 'subscription'
+                ? SubscriptionEvent::auditHistory($user)->paginate(10)->withQueryString() : null,
             'statusLabel' => self::STATUS_LABELS[$user->status] ?? ($user->status ?: '—'),
             'roleLabel' => self::ROLE_LABELS[$user->role] ?? ($user->role ?: '—'),
             ...$this->adminLayoutData('Profil utilizator', 'users/'.$user->getKey()),

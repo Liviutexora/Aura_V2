@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Route;
 Blade::anonymousComponentPath(resource_path('views/admin/components'), 'aura-admin');
 
 $auraAdminDemoPages = [
-    'subscriptions', 'levels', 'xprules', 'achievements', 'transactions', 'commissions', 'payouts',
+    'levels', 'xprules', 'achievements', 'transactions', 'commissions', 'payouts',
     'referrals', 'referral-rules', 'conversions', 'links', 'events', 'notifications', 'announcements',
     'messageTemplates', 'plans', 'audit', 'analytics', 'financial-reports', 'activity', 'gamification',
     'progress', 'wallet', 'integrations', 'integration-config', 'delivery-log', 'roles', 'settings',
@@ -93,7 +93,7 @@ Route::prefix('admin')->name('aura.admin.')->middleware(['auth', 'active', 'supe
     Route::patch('missions/{mission}', [ProjectOperationsController::class, 'deadline'])->name('missions.update');
     Route::get('verification/{submission}', [ProjectOperationsController::class, 'verification'])->whereNumber('submission')->name('verification.show');
     Route::patch('verification/{submission}', [ProjectOperationsController::class, 'review'])->name('verification.review');
-    Route::get('/subscriptions', static fn () => $loadAuraAdminDemo('subscriptions'))->name('subscriptions');
+    Route::get('/subscriptions', [SubscriptionAdminController::class, 'subscriptions'])->name('subscriptions');
     Route::get('/plans/catalog', [SubscriptionAdminController::class, 'plans'])->name('plans.catalog');
     Route::get('/plans/create', [SubscriptionAdminController::class, 'form'])->name('plans.create');
     Route::get('/plans/{plan}/edit', [SubscriptionAdminController::class, 'form'])->whereNumber('plan')->name('plans.edit');
@@ -101,6 +101,8 @@ Route::prefix('admin')->name('aura.admin.')->middleware(['auth', 'active', 'supe
     Route::patch('/plans/{plan}', [SubscriptionAdminController::class, 'savePlan'])->whereNumber('plan')->name('plans.update');
     Route::get('/subscriptions/periods', [SubscriptionAdminController::class, 'memberships'])->name('subscriptions.periods');
     Route::get('/subscriptions/history', [SubscriptionAdminController::class, 'events'])->name('subscriptions.history');
+    Route::get('/subscriptions/codes', [SubscriptionAdminController::class, 'codes'])->name('subscriptions.codes');
+    Route::get('/promo-codes', [SubscriptionAdminController::class, 'codes'])->name('promo-codes');
     Route::post('/users/{user}/memberships', [SubscriptionAdminController::class, 'grant'])->name('subscriptions.grant');
     Route::post('/subscriptions/codes', [SubscriptionAdminController::class, 'issueCode'])->name('subscriptions.codes.store');
     Route::get('/levels', static fn () => $loadAuraAdminDemo('levels'))->name('levels');

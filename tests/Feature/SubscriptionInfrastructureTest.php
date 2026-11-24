@@ -260,7 +260,7 @@ class SubscriptionInfrastructureTest extends TestCase
         $change = UserMembership::where('plan_id', $premium->id)->sole();
         $this->travelTo($change->starts_at);
         $this->getJson('/subscriptions/overview')->assertJsonPath('current.plan_id', $premium->id);
-        $this->actingAs($admin)->postJson($url, array_merge($manual, ['request_key' => Str::uuid()]))->assertCreated();
+        $this->actingAs($admin)->postJson($url, array_merge($manual, ['timing' => 'period_end', 'request_key' => Str::uuid()]))->assertCreated();
         $this->actingAs($owner)->getJson('/subscriptions/overview')->assertJsonPath('current.plan_id', $premium->id);
         $this->travelTo($change->ends_at);
         $this->getJson('/subscriptions/overview')->assertJsonPath('current.plan_id', $standard->id);
@@ -275,7 +275,11 @@ class SubscriptionInfrastructureTest extends TestCase
         $this->actingAs($owner)->postJson('/subscriptions/trial', ['plan_id' => $standard->id, 'request_key' => Str::uuid()])->assertCreated();
         $grant = ['plan_id' => $premium->id, 'duration_days' => 7, 'reason' => 'Acces acordat', 'timing' => 'now'];
         $url = '/admin/users/'.$owner->id.'/memberships';
-        $this->actingAs($admin)->postJson($url, $grant + ['request_key' => Str::uuid()])->assertCreated();
+        $trial = UserMembership::sole();
+        $this->actingAs($admin)->postJson($url, $grant + ['request_key' => Str::uuid()])
+            ->assertUnprocessable()->assertJsonValidationErrors('confirm_replace_membership_id');
+        $this->assertNull($trial->fresh()->closed_at);
+        $this->postJson($url, $grant + ['request_key' => Str::uuid(), 'confirm_replace_membership_id' => $trial->id])->assertCreated();
         $current = UserMembership::where('user_id', $owner->id)->effectiveAt(now())->sole();
         $this->assertSame($premium->id, $current->plan_id);
         $extension = $grant + ['request_key' => Str::uuid()];
@@ -283,7 +287,8 @@ class SubscriptionInfrastructureTest extends TestCase
         $this->postJson($url, $extension)->assertConflict();
         $this->assertEquals($current->ends_at, UserMembership::findOrFail($next->json('id'))->starts_at);
         $business = Plan::where('seed_key', 'business')->sole();
-        $this->postJson($url, array_merge($grant, ['plan_id' => $business->id, 'duration_days' => 2, 'request_key' => Str::uuid()]))->assertCreated();
+        $this->postJson($url, array_merge($grant, ['plan_id' => $business->id, 'duration_days' => 2, 'request_key' => Str::uuid(),
+            'confirm_replace_membership_id' => $current->id]))->assertCreated();
         $this->actingAs($owner)->getJson('/subscriptions/overview')->assertJsonPath('current.plan_id', $business->id);
         $reserved = UserMembership::findOrFail($next->json('id'));
         $this->assertEquals($reserved->starts_at->addDays(7), $reserved->ends_at);

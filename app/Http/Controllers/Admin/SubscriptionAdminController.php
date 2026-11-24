@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Plan;
 use App\Models\SubscriptionEvent;
+use App\Models\SubscriptionPromoCode;
 use App\Models\User;
 use App\Models\UserMembership;
 use App\Services\MembershipService;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -146,27 +148,117 @@ class SubscriptionAdminController extends Controller
         return response()->json(UserMembership::latest('id')->paginate(50));
     }
 
-    public function events(): JsonResponse
+    private function subscriptionLayout(string $page, string $title): array
     {
-        return response()->json(SubscriptionEvent::latest('id')->paginate(50));
+        return [
+            'demoData' => ['nav' => json_decode(file_get_contents(resource_path('data/admin-navigation.json')), true, 512, JSON_THROW_ON_ERROR)],
+            'demoPage' => $page,
+            'pageTitle' => $title,
+            'auraAdminServerRendered' => true,
+        ];
     }
 
-    public function grant(Request $request, User $user, MembershipService $service): JsonResponse
+    public function subscriptions(Request $request): View
+    {
+        $layout = $this->subscriptionLayout('subscriptions', 'Abonamente utilizatori');
+        if ($request->query('tab') === 'history') {
+            return view('admin.pages.subscriptions', $layout + [
+                'events' => SubscriptionEvent::auditHistory()->paginate(10)->withQueryString(),
+            ]);
+        }
+
+        $filters = $request->validate([
+            'q' => 'nullable|string|max:255', 'status' => 'nullable|in:active,scheduled,expired',
+            'range' => 'nullable|in:7,30,90', 'sort' => 'nullable|in:user,plan,source,start,end,status',
+            'direction' => 'nullable|in:asc,desc',
+        ]);
+        $at = CarbonImmutable::now()->startOfSecond();
+        $statusSql = "case when ends_at <= ? then 'expired' when starts_at > ? then 'scheduled' else 'active' end";
+        $columns = ['user' => 'users.name', 'plan' => 'terms->name', 'source' => 'source',
+            'start' => 'starts_at', 'end' => 'ends_at', 'status' => 'period_status'];
+        $direction = $filters['direction'] ?? 'desc';
+        $periods = UserMembership::join('users', 'users.id', '=', 'user_memberships.user_id')
+            ->select(['user_memberships.*', 'users.name as user_name', 'users.email as user_email'])
+            ->selectRaw($statusSql.' as period_status', [$at, $at]);
+        if (isset($filters['q'])) {
+            $term = '%'.$filters['q'].'%';
+            $periods->where(fn (Builder $query) => $query->where('users.name', 'like', $term)
+                ->orWhere('users.email', 'like', $term)->orWhere('terms->name', 'like', $term));
+        }
+        if (isset($filters['status'])) {
+            $periods->whereRaw($statusSql.' = ?', [$at, $at, $filters['status']]);
+        }
+        if (isset($filters['range'])) {
+            $periods->where('starts_at', '<=', $at)->where('ends_at', '>', $at->subDays((int) $filters['range']));
+        }
+        $periods->orderBy($columns[$filters['sort'] ?? 'start'], $direction)->orderBy('user_memberships.id', $direction);
+
+        if ($request->has('manage_user')) {
+            $recipientId = $request->validate(['manage_user' => 'required|integer|min:1'])['manage_user'];
+            $recipient = User::select('id', 'name', 'email')->findOrFail($recipientId);
+            $layout['recipient'] = $recipient;
+            $layout['currentPeriod'] = UserMembership::whereBelongsTo($recipient)->effectiveAt($at)->first();
+            $layout['activePlans'] = Plan::activeOptions();
+        }
+
+        return view('admin.pages.subscriptions', $layout + [
+            'periods' => $periods->paginate(6)->withQueryString(), 'filters' => $filters, 'direction' => $direction, 'at' => $at,
+        ]);
+    }
+
+    public function events(): JsonResponse
+    {
+        return response()->json(SubscriptionEvent::auditHistory()->paginate(50));
+    }
+
+    public function codes(Request $request): View|JsonResponse
+    {
+        $filters = $request->validate(['q' => 'nullable|string|max:255', 'status' => 'nullable|in:disponibil,utilizat,expirat']);
+        $inventory = SubscriptionPromoCode::inventory($filters['status'] ?? null)
+            ->with(['plan:id,name', 'reservedUser:id,name,email', 'membership:id,user_id', 'membership.user:id,name,email']);
+        if (isset($filters['q'])) {
+            $term = '%'.$filters['q'].'%';
+            $person = fn (Builder $users) => $users->where('name', 'like', $term)->orWhere('email', 'like', $term);
+            $inventory->where(fn (Builder $query) => $query->whereRelation('plan', 'name', 'like', $term)
+                ->orWhereHas('reservedUser', $person)->orWhereHas('membership.user', $person));
+        }
+        $isPage = $request->routeIs('aura.admin.promo-codes');
+        $codes = $inventory->latest('id')->paginate($isPage ? 6 : 50)->withQueryString();
+        if ($isPage) {
+            return view('admin.pages.promo-codes', $this->subscriptionLayout('promo-codes', 'Coduri promoționale') + [
+                'codes' => $codes, 'filters' => $filters, 'activePlans' => Plan::activeOptions(),
+                'beneficiaries' => User::orderBy('name')->orderBy('id')->get(['id', 'name', 'email']),
+            ]);
+        }
+
+        $codes->getCollection()->each->append('status');
+
+        return response()->json($codes, headers: ['Cache-Control' => 'no-store']);
+    }
+
+    public function grant(Request $request, User $user, MembershipService $service): JsonResponse|RedirectResponse
     {
         $data = $request->validate(['plan_id' => 'required|integer|min:1', 'duration_days' => 'required|integer|between:1,3650',
-            'timing' => 'required|in:now,period_end', 'reason' => 'required|string|max:1000', 'request_key' => 'required|uuid']);
+            'timing' => 'required|in:now,period_end', 'reason' => 'required|string|max:1000', 'request_key' => 'required|uuid',
+            'confirm_replace_membership_id' => 'nullable|integer|min:1|prohibited_unless:timing,now']);
 
-        return response()->json($service->manual($request->user(), $user, $data['plan_id'], $data['duration_days'],
-            $data['timing'], $data['reason'], $data['request_key']), 201);
+        $membership = $service->manual($request->user(), $user, $data['plan_id'], $data['duration_days'],
+            $data['timing'], $data['reason'], $data['request_key'], $data['confirm_replace_membership_id'] ?? null);
+
+        return $request->boolean('membership_form')
+            ? redirect()->route('aura.admin.users.show', ['user' => $user, 'tab' => 'subscription'])
+                ->with('membership_status', 'Abonamentul a fost salvat.')
+            : response()->json($membership, 201);
     }
 
     public function issueCode(Request $request, MembershipService $service): JsonResponse
     {
         $data = $request->validate(['plan_id' => 'required|integer|min:1', 'duration_days' => 'required|integer|between:1,3650',
-            'reserved_user_id' => 'nullable|integer|exists:users,id', 'expires_at' => 'nullable|date|after:now', 'request_key' => 'required|uuid']);
+            'reserved_user_id' => 'nullable|integer|exists:users,id', 'expires_at' => 'nullable|date|after:now',
+            'reason' => 'nullable|string|max:1000', 'request_key' => 'required|uuid']);
 
         return response()->json($service->issueCode($request->user(), $data['plan_id'], $data['duration_days'],
             $data['reserved_user_id'] ?? null, isset($data['expires_at']) ? CarbonImmutable::parse($data['expires_at']) : null,
-            $data['request_key']), 201, ['Cache-Control' => 'no-store']);
+            $data['request_key'], $data['reason'] ?? null), 201, ['Cache-Control' => 'no-store']);
     }
 }

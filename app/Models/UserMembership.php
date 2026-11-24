@@ -16,6 +16,17 @@ class UserMembership extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function sourceLabel(): string
+    {
+        return match ($this->source) {
+            'trial' => 'Trial',
+            'manual' => 'ADMIN',
+            'promo' => 'Promoție',
+            'stripe' => 'Stripe',
+            default => $this->source,
+        };
+    }
+
     protected function casts(): array
     {
         return ['starts_at' => 'immutable_datetime', 'ends_at' => 'immutable_datetime', 'closed_at' => 'immutable_datetime', 'terms' => 'array'];
