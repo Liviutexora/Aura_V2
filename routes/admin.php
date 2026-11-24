@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\ProjectCatalogController;
 use App\Http\Controllers\Admin\ProjectOperationsController;
+use App\Http\Controllers\Admin\SubscriptionAdminController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\AuthController;
 use App\Services\CatalogEditor;
@@ -93,6 +94,13 @@ Route::prefix('admin')->name('aura.admin.')->middleware(['auth', 'active', 'supe
     Route::get('verification/{submission}', [ProjectOperationsController::class, 'verification'])->whereNumber('submission')->name('verification.show');
     Route::patch('verification/{submission}', [ProjectOperationsController::class, 'review'])->name('verification.review');
     Route::get('/subscriptions', static fn () => $loadAuraAdminDemo('subscriptions'))->name('subscriptions');
+    Route::get('/plans/catalog', [SubscriptionAdminController::class, 'plans'])->name('plans.catalog');
+    Route::post('/plans', [SubscriptionAdminController::class, 'savePlan'])->name('plans.store');
+    Route::patch('/plans/{plan}', [SubscriptionAdminController::class, 'savePlan'])->whereNumber('plan')->name('plans.update');
+    Route::get('/subscriptions/periods', [SubscriptionAdminController::class, 'memberships'])->name('subscriptions.periods');
+    Route::get('/subscriptions/history', [SubscriptionAdminController::class, 'events'])->name('subscriptions.history');
+    Route::post('/users/{user}/memberships', [SubscriptionAdminController::class, 'grant'])->name('subscriptions.grant');
+    Route::post('/subscriptions/codes', [SubscriptionAdminController::class, 'issueCode'])->name('subscriptions.codes.store');
     Route::get('/levels', static fn () => $loadAuraAdminDemo('levels'))->name('levels');
     Route::get('/xprules', static fn () => $loadAuraAdminDemo('xprules'))->name('xprules');
     Route::get('/achievements', static fn () => $loadAuraAdminDemo('achievements'))->name('achievements');
@@ -107,7 +115,7 @@ Route::prefix('admin')->name('aura.admin.')->middleware(['auth', 'active', 'supe
     Route::get('/notifications', static fn () => $loadAuraAdminDemo('notifications'))->name('notifications');
     Route::get('/announcements', static fn () => $loadAuraAdminDemo('announcements'))->name('announcements');
     Route::get('/messageTemplates', static fn () => $loadAuraAdminDemo('messageTemplates'))->name('messageTemplates');
-    Route::get('/plans', static fn () => $loadAuraAdminDemo('plans'))->name('plans');
+    Route::get('/plans', [SubscriptionAdminController::class, 'index'])->name('plans');
     Route::get('/audit', static fn () => $loadAuraAdminDemo('audit'))->name('audit');
     Route::get('/dashboard', static function () {
         $demoData = json_decode(file_get_contents(resource_path('data/admin-demo.json')), true, 512, JSON_THROW_ON_ERROR);

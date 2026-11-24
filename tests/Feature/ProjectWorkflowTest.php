@@ -8,6 +8,7 @@ use App\Models\ExternalEarning;
 use App\Models\MissionSubmission;
 use App\Models\MissionTemplate;
 use App\Models\Opportunity;
+use App\Models\Plan;
 use App\Models\Project;
 use App\Models\User;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
@@ -76,6 +77,8 @@ class ProjectWorkflowTest extends TestCase
         $this->actingAs($owner)->get('/opportunities')->assertOk()->assertSee($offer->title);
         $this->get('/opportunities/'.$offer->id)->assertOk()->assertSee('Acceptă oportunitatea');
         $accept = '/opportunities/'.$offer->id.'/projects';
+        $this->post($accept, $attestation)->assertSessionHasErrors('membership');
+        $this->postJson('/subscriptions/trial', ['plan_id' => Plan::where('seed_key', 'standard')->sole()->id, 'request_key' => (string) Str::uuid()])->assertCreated();
         $this->post($accept)->assertSessionHasErrors('eligibility');
         $this->post($accept, $attestation)->assertSessionHasNoErrors();
         $this->post($accept, $attestation)->assertSessionHasNoErrors();
@@ -93,6 +96,7 @@ class ProjectWorkflowTest extends TestCase
         $this->get('/missions/'.$mission->id)->assertNotFound();
         $this->post('/projects/'.$project->id.'/start')->assertNotFound();
         $this->get('/admin/missions')->assertForbidden();
+        $this->travel(30)->days();
         $this->actingAs($owner)->post('/projects/'.$project->id.'/start')->assertSessionHasNoErrors();
         $submissionUrl = '/missions/'.$mission->id.'/submissions';
         $this->post($submissionUrl, ['request_key' => (string) Str::uuid(), 'step_id' => $anchor->id, 'amount' => '250.00', 'earning_key' => (string) Str::uuid(), 'currency' => 'RON',

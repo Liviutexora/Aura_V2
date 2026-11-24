@@ -5,6 +5,7 @@ use App\Http\Controllers\EmailVerificationController;
 use App\Http\Controllers\MissionController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ReferralController;
+use App\Http\Controllers\SubscriptionController;
 use Illuminate\Support\Facades\Route;
 
 // UI-only preview routes. Replace with authenticated controllers before production.
@@ -32,6 +33,9 @@ Route::middleware(['auth', 'active', 'verified:aura.verify-email'])->group(funct
     Route::get('/referrals', ReferralController::class)->name('aura.referrals');
     Route::get('/integrations', fn () => view('integrations.index', ['demoRoute' => 'integrations']))->name('aura.integrations');
     Route::get('/subscriptions', fn () => view('subscriptions.index', ['demoRoute' => 'subscriptions']))->name('aura.subscriptions');
+    Route::get('/subscriptions/overview', [SubscriptionController::class, 'overview'])->name('aura.subscriptions.overview');
+    Route::post('/subscriptions/trial', [SubscriptionController::class, 'trial'])->middleware('throttle:10,1')->name('aura.subscriptions.trial');
+    Route::post('/subscriptions/redeem', [SubscriptionController::class, 'redeem'])->middleware('throttle:10,1')->name('aura.subscriptions.redeem');
     Route::get('/profile', fn () => redirect()->route('aura.settings'))->name('aura.profile');
     Route::get('/settings', fn () => view('profile.settings', ['demoRoute' => 'settings']))->name('aura.settings');
     Route::post('/settings/profile', [AuthController::class, 'updateProfile'])->middleware('throttle:5,1')->name('aura.settings.profile.update');

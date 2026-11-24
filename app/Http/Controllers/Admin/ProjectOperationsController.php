@@ -30,9 +30,10 @@ class ProjectOperationsController extends Controller
     {
         $isMission = $request->route('entity') === 'missions';
         $data = $request->validate(['user_id' => 'required|integer|exists:users,id', 'opportunity_id' => 'required|integer|exists:opportunities,id',
-            'template_id' => $isMission ? 'required|integer|exists:mission_templates,id' : 'prohibited']);
+            'template_id' => $isMission ? 'required|integer|exists:mission_templates,id' : 'prohibited',
+            'participation_type' => 'sometimes|in:explorer,mentor']);
         $project = $enrollment->accept(User::findOrFail($data['user_id']), Opportunity::findOrFail($data['opportunity_id']), $request->user(), [],
-            $isMission ? MissionTemplate::findOrFail($data['template_id']) : null);
+            $isMission ? MissionTemplate::findOrFail($data['template_id']) : null, $data['participation_type'] ?? null);
 
         return to_route('aura.admin.projects.show', $project)->with('status', 'Alocarea a fost salvată.');
     }

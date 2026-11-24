@@ -17,25 +17,29 @@ use Illuminate\Validation\ValidationException;
 
 class ProjectEnrollment
 {
-    public function __construct(private OpportunityCatalog $catalog) {}
+    public function __construct(private OpportunityCatalog $catalog, private SubscriptionAccess $access) {}
 
-    public function accept(User $owner, Opportunity $offer, User $actor, array $attestations = [], ?MissionTemplate $extra = null): Project
+    public function accept(User $owner, Opportunity $offer, User $actor, array $attestations = [], ?MissionTemplate $extra = null, ?string $type = null): Project
     {
-        return DB::transaction(function () use ($owner, $offer, $actor, $attestations, $extra) {
+        return DB::transaction(function () use ($owner, $offer, $actor, $attestations, $extra, $type) {
             Category::whereKey($offer->category_id)->lockForUpdate()->firstOrFail();
             $offer = Opportunity::lockForUpdate()->findOrFail($offer->id);
             $owner = User::lockForUpdate()->findOrFail($owner->id);
             abort_unless($owner->isActive(), 403);
             $project = $owner->projects()->where('opportunity_id', $offer->id)->lockForUpdate()->first();
+            abort_if($project && $type !== null && $type !== $project->participation_type, 409);
             if (! $project) {
                 if (! $this->catalog->published()->whereKey($offer->id)->exists()) {
                     throw ValidationException::withMessages(['opportunity' => 'Înscrierile pentru această oportunitate sunt închise.']);
                 }
+                $type ??= 'explorer';
+                $this->access->authorizeEnrollment($owner, $offer, $type);
                 $rules = $this->catalog->snapshot($offer, $owner, $actor, $attestations);
                 $accepted = now();
                 $project = $owner->projects()->create([
                     'opportunity_id' => $offer->id, 'title' => $offer->title, 'source' => $owner->is($actor) ? 'self' : 'admin',
                     'created_by' => $actor->id, 'status' => 'accepted', 'accepted_at' => $accepted,
+                    'participation_type' => $type,
                     'due_on' => $offer->project_due_on ?? $this->relativeDate($accepted, $offer->project_duration_days),
                     'opportunity_version' => $offer->version, 'offer_snapshot' => [...$offer->attributesToArray(), 'category_name' => $offer->category->name], 'eligibility_snapshot' => $rules,
                 ]);

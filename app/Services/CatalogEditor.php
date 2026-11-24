@@ -121,6 +121,12 @@ class CatalogEditor
         $class = self::MODELS[$entity];
         $fields = self::fields($entity);
         $data = $this->validateFields($fields, $input);
+        if ($entity === 'opportunities') {
+            $data += Validator::make($input, [
+                'min_access_level' => 'sometimes|integer|between:1,1000000',
+                'participation_mode' => 'sometimes|in:explorer,mentor,both',
+            ])->validate();
+        }
 
         return DB::transaction(function () use ($entity, $class, $id, $data, $input, $actor) {
             $offerId = $data['opportunity_id'] ?? ($entity === 'opportunities' ? $id : null);

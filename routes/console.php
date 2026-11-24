@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\MissionReminder;
+use App\Services\MembershipService;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -29,3 +30,8 @@ Schedule::call(function (): void {
 })->name('mission-reminders')->everyMinute();
 
 Schedule::command('auth:clear-resets')->everyFifteenMinutes();
+
+Artisan::command('memberships:expire', function (MembershipService $service): void {
+    $service->closeExpired();
+})->purpose('Înregistrează expirările perioadelor de abonament');
+Schedule::call(fn () => app(MembershipService::class)->closeExpired())->name('memberships:expire')->everyMinute()->withoutOverlapping();

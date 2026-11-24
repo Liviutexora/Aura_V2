@@ -13,9 +13,10 @@ class OpportunityCatalog
 {
     public const TIMEZONE = 'Europe/Bucharest';
 
-    public function published(bool $expired = false): Builder
+    public function published(bool $expired = false, ?int $maxAccessLevel = null): Builder
     {
         $query = Opportunity::query()->with('category')->where('status', 'published')
+            ->when($maxAccessLevel !== null, fn (Builder $query) => $query->where('min_access_level', '<=', $maxAccessLevel))
             ->whereHas('category', fn (Builder $category) => $category->where('status', 'active')->where('visibility', 'all'))
             ->where('starts_at', '<=', now());
 

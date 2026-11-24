@@ -7,22 +7,24 @@ use App\Models\ExternalEarning;
 use App\Models\Opportunity;
 use App\Models\Project;
 use App\Models\ProjectMission;
+use App\Models\User;
 use App\Services\MissionProgress;
 use App\Services\OpportunityCatalog;
 use App\Services\ProjectEnrollment;
+use App\Services\SubscriptionAccess;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class ProjectController extends Controller
 {
-    public function __construct(private OpportunityCatalog $catalog, private ProjectEnrollment $enrollment) {}
+    public function __construct(private OpportunityCatalog $catalog, private ProjectEnrollment $enrollment, private SubscriptionAccess $access) {}
 
     public function catalog(Request $request): View
     {
         $filters = $request->validate(['q' => 'nullable|string|max:120', 'category' => 'nullable|integer', 'difficulty' => 'nullable|in:Ușor,Mediu,Dificil',
             'reward' => 'nullable|in:100', 'time' => 'nullable|in:15', 'availability' => 'nullable|in:available,expired']);
-        $query = $this->catalog->published(($filters['availability'] ?? '') === 'expired');
+        $query = $this->catalog->published(($filters['availability'] ?? '') === 'expired', $this->catalogLevel($request->user()));
         if ($term = $filters['q'] ?? null) {
             $query->where(fn ($q) => $q->where('title', 'like', "%{$term}%")->orWhere('summary', 'like', "%{$term}%"));
         }
@@ -45,8 +47,9 @@ class ProjectController extends Controller
     public function opportunity(Request $request, Opportunity $opportunity): View
     {
         $project = $request->user()->projects()->where('opportunity_id', $opportunity->id)->first();
-        abort_unless($project || $this->catalog->published()->whereKey($opportunity->id)->exists() || $this->catalog->published(true)->whereKey($opportunity->id)->exists(), 404);
-        $available = $this->catalog->published()->whereKey($opportunity->id)->exists();
+        $level = $this->catalogLevel($request->user());
+        $available = $this->catalog->published(false, $level)->whereKey($opportunity->id)->exists();
+        abort_unless($project || $available || $this->catalog->published(true, $level)->whereKey($opportunity->id)->exists(), 404);
         $offer = $project ? (new Opportunity)->forceFill($project->offer_snapshot) : $opportunity;
         $offer->setRelation('category', $project ? Category::find($offer->category_id) : $opportunity->category);
         $templates = $project ? $project->missions()->with('steps')->get() : $opportunity->templates()->where('assign_on_accept', true)->where('status', 'active')
@@ -58,8 +61,8 @@ class ProjectController extends Controller
 
     public function accept(Request $request, Opportunity $opportunity): RedirectResponse
     {
-        $data = $request->validate(['attestations' => 'nullable|array', 'attestations.*' => 'string|max:64']);
-        $project = $this->enrollment->accept($request->user(), $opportunity, $request->user(), $data['attestations'] ?? []);
+        $data = $request->validate(['attestations' => 'nullable|array', 'attestations.*' => 'string|max:64', 'participation_type' => 'sometimes|in:explorer,mentor']);
+        $project = $this->enrollment->accept($request->user(), $opportunity, $request->user(), $data['attestations'] ?? [], type: $data['participation_type'] ?? null);
 
         return to_route('aura.projects.show', $project)->with('status', 'Oportunitate acceptată.');
     }
@@ -112,7 +115,7 @@ class ProjectController extends Controller
 
         $data = $request->user()?->isActive() ? $this->dashboardData($request) : [
             'projects' => collect(), 'currentMission' => null, 'completedCount' => 0, 'missionCount' => 0, 'totals' => collect(),
-            'offers' => $this->catalog->published()->orderByDesc('is_featured')->latest('id')->limit(3)->get(),
+            'offers' => $this->catalog->published(maxAccessLevel: 1)->orderByDesc('is_featured')->latest('id')->limit(3)->get(),
         ];
 
         return view('public.landing', $data + ['demoRoute' => 'home', 'publicOnly' => ! $request->user()]);
@@ -121,6 +124,11 @@ class ProjectController extends Controller
     public function dashboard(Request $request): View
     {
         return view('dashboard.index', $this->dashboardData($request) + ['demoRoute' => 'dashboard']);
+    }
+
+    private function catalogLevel(User $user): int
+    {
+        return $this->access->current($user)?->terms['access_level'] ?? 1;
     }
 
     private function dashboardData(Request $request): array
@@ -132,7 +140,7 @@ class ProjectController extends Controller
         return ['projects' => $projects,
             'completedCount' => $user->projects()->where('status', 'completed')->count(), 'missionCount' => $missions->count(),
             'currentMission' => $missions->with('steps', 'project')->orderBy('id')->first(),
-            'offers' => $this->catalog->published()->orderByDesc('is_featured')->latest('id')->limit(3)->get(),
+            'offers' => $this->catalog->published(maxAccessLevel: $this->catalogLevel($user))->orderByDesc('is_featured')->latest('id')->limit(3)->get(),
             'totals' => ExternalEarning::whereHas('project', fn ($q) => $q->where('user_id', $user->id))
                 ->where('status', 'confirmed')->groupBy('currency')->selectRaw('currency, SUM(amount_minor) AS total')->get()];
     }
