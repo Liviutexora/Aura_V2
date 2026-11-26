@@ -31,7 +31,7 @@ class ProjectWorkflowTest extends TestCase
         foreach (['categories', 'eligibility', 'opportunities', 'missions', 'projects', 'mission-templates'] as $resource) {
             $this->get('/admin/'.$resource.'/create')->assertOk()->assertSee('Salvează');
         }
-        $this->get('/admin')->assertOk();
+        $this->get('/admin')->assertRedirectToRoute('aura.admin.dashboard');
         $this->get('/opportunities')->assertOk()->assertSee('Nicio oportunitate găsită');
         $this->get('/missions')->assertOk()->assertSee('Nu ai misiuni');
         $this->get('/projects')->assertOk()->assertSee('Nu ai proiecte');
