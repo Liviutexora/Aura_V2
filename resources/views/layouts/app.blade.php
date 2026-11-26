@@ -1,9 +1,17 @@
 <!doctype html>
-<html lang="ro"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#100d25"><title>@yield('title', 'Aura — Oportunități, pas cu pas')</title>@if($auraUseVite ?? false)
+<html lang="ro"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#100d25"><title>@yield('title', 'Aura — Oportunități, pas cu pas')</title><x-aura.pwa-head />@if($auraUseVite ?? false)
 @vite(['resources/css/app.css', 'resources/js/app.js'])
 @else
 <link rel="stylesheet" href="{{ asset('assets/aura/app.css') }}">
-@endif</head><body><div id="app">@yield('body')</div><div id="toast" role="status"></div><dialog id="modal"></dialog><script>window.AURA_ASSET_BASE = @json(asset('assets/aura'));</script>@unless($auraUseVite ?? false)
+@endif</head><body><div id="app">@yield('body')</div><div id="toast" role="status"></div><dialog id="modal"></dialog>@php
+$auraPwaConfig = [
+    'enabled' => (bool) config('pwa.enabled'),
+    'workerEnabled' => (bool) config('pwa.worker_enabled'),
+    'workerRetirement' => (bool) config('pwa.worker_retirement'),
+    'workerUrl' => route('aura.pwa.worker'),
+];
+@endphp
+<script>window.AURA_ASSET_BASE = @json(asset('assets/aura'));window.AURA_PWA = @json($auraPwaConfig);</script>@if(config('pwa.enabled') || config('pwa.worker_retirement'))<script src="{{ asset('assets/aura/pwa.js') }}" defer></script>@endif @unless($auraUseVite ?? false)
 @if(! in_array($demoRoute ?? '', ['login', 'register', 'forgot-password', 'reset-password', 'verify-email'], true) && ! ($publicOnly ?? false))
 <script src="{{ asset('assets/aura/premium-icons.js') }}"></script>
 @if(request()->routeIs('aura.referrals'))

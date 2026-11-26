@@ -4,12 +4,15 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\EmailVerificationController;
 use App\Http\Controllers\MissionController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\PwaController;
 use App\Http\Controllers\ReferralController;
 use App\Http\Controllers\SubscriptionController;
 use Illuminate\Support\Facades\Route;
 
 // UI-only preview routes. Replace with authenticated controllers before production.
 Route::get('/', [ProjectController::class, 'landing'])->name('aura.home');
+Route::get('/manifest.webmanifest', [PwaController::class, 'manifest'])->name('aura.pwa.manifest');
+Route::get('/sw.js', [PwaController::class, 'worker'])->name('aura.pwa.worker');
 Route::get('/subscriptions/select/{plan}', [SubscriptionController::class, 'select'])->whereNumber('plan')->name('aura.subscriptions.select');
 Route::get('/pricing', fn () => view('public.pricing', ['demoRoute' => 'pricing']))->name('aura.pricing');
 Route::middleware(['auth', 'active', 'verified:aura.verify-email'])->group(function (): void {
