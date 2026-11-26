@@ -4,6 +4,8 @@ use App\Models\User;
 
 return [
 
+    'email_verification' => (bool) env('AUTH_EMAIL_VERIFICATION', true),
+
     /*
     |--------------------------------------------------------------------------
     | Authentication Defaults

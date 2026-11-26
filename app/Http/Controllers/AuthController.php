@@ -7,6 +7,7 @@ use App\Notifications\ResetAccountPassword;
 use App\Services\AccountMail;
 use App\Services\EmailVerificationCodes;
 use App\Services\LoginAttempts;
+use Closure;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -17,7 +18,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
-use Closure;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -103,7 +103,8 @@ class AuthController extends Controller
         ], self::FORM_MESSAGES);
 
         $sponsorId = $request->session()->get(self::REGISTRATION_SPONSOR);
-        $user = DB::transaction(function () use ($validated, $sponsorId): User {
+        $skipEmailVerification = app()->environment('local') && ! config('auth.email_verification');
+        $user = DB::transaction(function () use ($validated, $sponsorId, $skipEmailVerification): User {
             $user = new User;
             $user->forceFill([
                 'name' => $validated['name'],
@@ -116,6 +117,9 @@ class AuthController extends Controller
                 $sponsor = User::whereKey($sponsorId)->where('status', 'active')->sharedLock()->first(['id']);
                 $user->sponsor()->associate($sponsor);
             }
+            if ($skipEmailVerification) {
+                $user->email_verified_at = now();
+            }
             $user->save();
             $user->profile()->create();
 
@@ -125,6 +129,10 @@ class AuthController extends Controller
         $request->session()->forget(self::REGISTRATION_SPONSOR);
         Auth::login($user);
         $request->session()->regenerate();
+
+        if ($skipEmailVerification) {
+            return redirect()->route('aura.dashboard');
+        }
 
         return redirect()->route('aura.verify-email')->with('status', $this->codes->issue($user));
     }
@@ -268,7 +276,7 @@ class AuthController extends Controller
         };
     }
 
-    /** @return array{0: \Closure, status: string, role: string} */
+    /** @return array{0: Closure, status: string, role: string} */
     private function resetCredentials(string $email, string $area): array
     {
         $email = Str::lower($email);
