@@ -8,10 +8,16 @@
     var installButton = panel && panel.querySelector('[data-pwa-install]');
     var status = panel && panel.querySelector('[data-pwa-status]');
     var manual = panel && panel.querySelector('[data-pwa-manual]');
+    var headerButton = document.querySelector('[data-pwa-header-install]');
+    var headerStatus = document.querySelector('[data-pwa-header-status]');
     var deferredPrompt = null;
     var standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 
     if (panel) panel.hidden = standalone;
+    if (headerButton && headerStatus) {
+        headerButton.hidden = standalone;
+        headerStatus.hidden = !standalone;
+    }
 
     if ('serviceWorker' in navigator && config.workerRetirement) {
         navigator.serviceWorker.getRegistration().then(function (registration) {
@@ -36,6 +42,8 @@
 
     if (!config.enabled) return;
 
+    if (panel && window.location.search.includes('install=manual') && !standalone) showManual();
+
     window.addEventListener('beforeinstallprompt', function (event) {
         if (standalone) return;
         event.preventDefault();
@@ -47,11 +55,16 @@
     window.addEventListener('appinstalled', function () {
         deferredPrompt = null;
         if (panel) panel.hidden = true;
+        if (headerButton && headerStatus) {
+            headerButton.hidden = true;
+            headerStatus.hidden = false;
+        }
     });
 
-    if (!panel || !installButton) return;
+    if (installButton) installButton.addEventListener('click', requestInstall);
+    if (headerButton) headerButton.addEventListener('click', requestInstall);
 
-    installButton.addEventListener('click', function () {
+    function requestInstall() {
         if (!deferredPrompt) {
             showManual();
             return;
@@ -69,14 +82,19 @@
         } catch (error) {
             showManual();
         }
-    });
+    }
 
     function showManual() {
+        if (!panel) {
+            window.location.assign(config.manualUrl);
+            return;
+        }
+        panel.hidden = false;
         if (manual) {
             manual.hidden = false;
             manual.open = true;
         }
-        status.textContent = 'Folosește instrucțiunile de mai jos pentru instalarea manuală.';
+        if (status) status.textContent = 'Folosește instrucțiunile de mai jos pentru instalarea manuală.';
     }
 
     function showUpdate(worker) {

@@ -4,8 +4,8 @@ namespace Tests\Feature\Auth;
 
 use App\Models\User;
 use App\Notifications\VerifyEmailCode;
-use Illuminate\Support\Facades\Notification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Testing\TestResponse;
 use LogicException;
 use PHPUnit\Framework\Attributes\TestWith;
@@ -169,6 +169,7 @@ class ReferralRegistrationTest extends TestCase
     {
         return [
             'name' => 'Persoană recomandată', 'email' => $email, 'terms' => '1',
+            'phone' => '0712345678',
             'password' => 'Test-password-123', 'password_confirmation' => 'Test-password-123',
         ];
     }

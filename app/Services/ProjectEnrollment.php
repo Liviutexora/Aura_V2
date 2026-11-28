@@ -65,6 +65,9 @@ class ProjectEnrollment
         DB::transaction(function () use ($project, $actor) {
             $locked = $actor->projects()->lockForUpdate()->findOrFail($project->id);
             if ($locked->status === 'accepted') {
+                if (! $this->access->current($actor)) {
+                    throw ValidationException::withMessages(['membership' => 'Este necesar un abonament activ pentru a începe proiectul.']);
+                }
                 $locked->update(['status' => 'active', 'started_at' => now()]);
                 $this->event($locked, $actor, 'project_started', null, null, 'accepted', 'active');
             }

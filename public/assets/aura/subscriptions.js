@@ -24,6 +24,7 @@
 
     const dialog = document.getElementById('activation-dialog');
     if (!dialog) return;
+    const onboarding = document.querySelector('[data-onboarding-plan]');
     const form = dialog.querySelector('form');
     const fields = form.elements;
     const loss = dialog.querySelector('[data-loss]');
@@ -63,15 +64,63 @@
         syncTiming();
         dialog.showModal();
     }
+    async function choosePlan(card) {
+        const chooser = onboarding.querySelector('[data-plan-chooser]');
+        const select = chooser.elements.plan_id;
+        const error = chooser.querySelector('[data-selection-error]');
+        error.hidden = true;
+        select.value = card.dataset.planCard;
+        try {
+            const response = await fetch(chooser.action, {
+                method: 'POST', body: new FormData(chooser), credentials: 'same-origin',
+                headers: {Accept: 'application/json'}, cache: 'no-store'
+            });
+            if (!response.ok) throw new Error('Selection failed');
+            dialog.dataset.selected = card.dataset.planCard;
+            const heading = document.createElement('h3');
+            heading.textContent = card.querySelector('h2').textContent;
+            onboarding.querySelector('[data-selected-summary]').replaceChildren(
+                heading, ...Array.from(card.querySelectorAll('.plan-price, p, .steps'), node => node.cloneNode(true))
+            );
+            onboarding.querySelector('[data-open-selected-plan]').disabled = false;
+            const trial = onboarding.querySelector('[data-selected-trial]');
+            if (trial) {
+                const days = Number(select.selectedOptions[0].dataset.trialDays);
+                trial.hidden = days < 1;
+                trial.elements.plan_id.value = card.dataset.planCard;
+                trial.querySelector('button').textContent = 'Începe trialul gratuit de ' + days + ' zile, fără card';
+            }
+            return true;
+        } catch {
+            select.value = dialog.dataset.selected || '';
+            error.textContent = 'Planul nu a putut fi selectat. Încearcă din nou.';
+            error.hidden = false;
+            return false;
+        }
+    }
+    if (onboarding) {
+        const chooser = onboarding.querySelector('[data-plan-chooser]');
+        chooser.addEventListener('submit', event => event.preventDefault());
+        chooser.elements.plan_id.addEventListener('change', async event => {
+            const card = track.querySelector('[data-plan-card="' + event.target.value + '"]');
+            if (card) await choosePlan(card);
+        });
+        onboarding.querySelector('[data-open-selected-plan]').addEventListener('click', () => {
+            const card = track.querySelector('[data-plan-card="' + dialog.dataset.selected + '"]');
+            if (card) openPlan(card);
+        });
+    }
     fields.timing.addEventListener('change', syncTiming);
     dialog.querySelector('.plan-close').addEventListener('click', () => dialog.close());
     dialog.addEventListener('cancel', event => { if (form.inert) event.preventDefault(); });
     dialog.addEventListener('close', () => { clearInterval(timer); fields.code.value = ''; });
-    catalog.addEventListener('click', event => {
-        if (event.target.closest('[data-open-plan]')) openPlan(event.target.closest('[data-plan-card]'));
+    catalog.addEventListener('click', async event => {
+        if (!event.target.closest('[data-open-plan]')) return;
+        const card = event.target.closest('[data-plan-card]');
+        if (!onboarding || await choosePlan(card)) openPlan(card);
     });
     const selected = Array.from(track.children).find(card => card.dataset.planCard && card.dataset.planCard === dialog.dataset.selected);
-    if (selected) openPlan(selected);
+    if (selected && !onboarding) openPlan(selected);
 
     document.querySelectorAll('form[data-activation]').forEach(activation => {
         activation.addEventListener('submit', async event => {
@@ -87,7 +136,8 @@
                     headers: {Accept: 'application/json'}, cache: 'no-store'
                 });
                 if (response.status === 201) {
-                    location.reload();
+                    if (onboarding) location.assign(onboarding.dataset.dashboardUrl);
+                    else location.reload();
                     return;
                 }
                 const payload = await response.json();

@@ -39,7 +39,7 @@ class EmailVerificationController extends Controller
 
         $request->user()->refresh();
         $request->session()->regenerate();
-        if ($request->session()->has('subscriptions.selected_plan')) {
+        if ($request->session()->has('subscriptions.onboarding') || $request->session()->has('subscriptions.selected_plan')) {
             $request->session()->forget('url.intended');
 
             return redirect()->route('aura.subscriptions');

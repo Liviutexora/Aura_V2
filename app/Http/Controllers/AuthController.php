@@ -29,6 +29,9 @@ class AuthController extends Controller
         'email.required' => 'Introdu adresa de email.',
         'email.email' => 'Introdu o adresă de email validă.',
         'email.max' => 'Adresa de email este prea lungă.',
+        'phone.required' => 'Introdu numărul de telefon.',
+        'phone.string' => 'Introdu un număr de telefon valid.',
+        'phone.regex' => 'Introdu un număr internațional cu + sau un număr românesc 07xxxxxxxx.',
         'name.required' => 'Introdu numele complet.',
         'name.string' => 'Introdu un nume valid.',
         'name.min' => 'Numele trebuie să aibă cel puțin 2 caractere.',
@@ -94,10 +97,18 @@ class AuthController extends Controller
         if (is_string($request->input('email'))) {
             $request->merge(['email' => Str::lower($request->input('email'))]);
         }
+        if (is_string($request->input('phone'))) {
+            $phone = preg_replace('/[\x20\t().-]+/', '', trim($request->input('phone')));
+            if (preg_match('/\A07[0-9]{8}\z/D', $phone)) {
+                $phone = '+4'.$phone;
+            }
+            $request->merge(['phone' => $phone]);
+        }
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'min:2', 'max:255'],
             'email' => ['bail', 'required', 'email:rfc', 'max:255', $this->uniqueEmail()],
+            'phone' => ['bail', 'required', 'string', 'regex:/\A\+[1-9][0-9]{7,14}\z/D'],
             'password' => ['required', 'string', 'confirmed', 'min:8'],
             'terms' => ['accepted'],
         ], self::FORM_MESSAGES);
@@ -109,6 +120,7 @@ class AuthController extends Controller
             $user->forceFill([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
+                'phone' => $validated['phone'],
                 'password' => Hash::make($validated['password']),
                 'role' => 'user',
                 'status' => 'active',
@@ -129,9 +141,10 @@ class AuthController extends Controller
         $request->session()->forget(self::REGISTRATION_SPONSOR);
         Auth::login($user);
         $request->session()->regenerate();
+        $request->session()->put('subscriptions.onboarding', true);
 
         if ($skipEmailVerification) {
-            return redirect()->route('aura.dashboard');
+            return redirect()->route('aura.subscriptions');
         }
 
         return redirect()->route('aura.verify-email')->with('status', $this->codes->issue($user));

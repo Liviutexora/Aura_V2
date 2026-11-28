@@ -6,6 +6,7 @@ use App\Models\ProjectEvent;
 use App\Models\ProjectMission;
 use App\Models\User;
 use App\Services\OpportunityCatalog;
+use App\Services\UserHeaderStatus;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -27,6 +28,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        \Illuminate\Support\Facades\View::composer('components.aura.user-header', function (View $view): void {
+            $view->with('headerIndicator', app(UserHeaderStatus::class)->for(auth()->user()));
+        });
         \Illuminate\Support\Facades\View::composer('layouts.project', function (View $view): void {
             $view->with('missionAlerts', ProjectEvent::whereHas('project', fn ($q) => $q->where('user_id', auth()->id()))
                 ->where('event_type', 'reminder_sent')->latest('id')->limit(10)->get());

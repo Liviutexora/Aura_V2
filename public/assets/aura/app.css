@@ -41,3 +41,15 @@ input,select,textarea{background:linear-gradient(120deg,#1c102f,#170d29);border-
 .profile-email-dialog .dialog-helper{margin-top:18px;font-size:10px}
 @media(max-width:700px){.profile-email-dialog{padding:22px}.profile-email-dialog .dialog-actions{flex-direction:column}.profile-email-dialog .dialog-actions .btn{width:100%}}
 .hero .intro:after{background-size:100% 100%}
+.aura-brand-status{display:flex;align-items:baseline;min-width:0;white-space:nowrap}
+.aura-brand-status .brand{flex:none}
+.aura-user-header .aura-header-indicator,.aura-user-header .pwa-header-install{font-size:10px;font-weight:800;margin-left:12px;line-height:normal;text-align:center}
+.aura-user-header .aura-header-indicator{display:inline-block;min-width:0;max-width:190px;white-space:normal;overflow-wrap:anywhere}
+.aura-user-header .aura-header-indicator--active{background:#23684877;border-color:#58b77c;color:#9cf3a8;box-shadow:0 0 15px #58b77c22}
+.aura-user-header .aura-header-indicator--warning{background:#91682144;border-color:#e4a94b;color:#ffdb8d;box-shadow:0 0 15px #e4a94b22}
+.aura-user-header .aura-header-indicator--danger{background:#a43d4d44;border-color:#e46c78;color:#ff9aa5;box-shadow:0 0 15px #e46c7822}
+.aura-user-header .aura-user-actions{display:flex;align-items:center;flex:none}
+.aura-brand-status .pwa-header-install{padding:5px 12px;border-radius:20px;background:radial-gradient(ellipse at 25% 0%,#fff2b7 0%,transparent 62%),linear-gradient(115deg,#ffdc7e,#f3b746);color:#20112b;font-weight:800;cursor:pointer}
+.aura-brand-status .pwa-header-install[hidden],.aura-brand-status [data-pwa-header-status][hidden]{display:none}
+@media(min-width:701px) and (max-width:900px){.aura-user-header{gap:10px;padding:0 16px}.aura-user-header nav a{padding:8px}.aura-user-header .aura-header-indicator{max-width:110px}}
+@media(max-width:700px){.aura-user-header{gap:8px;padding:0 12px}.aura-user-header .aura-brand-status{flex:1}.aura-user-header .aura-header-indicator,.aura-user-header .pwa-header-install{margin-left:6px;font-size:9px;padding:4px 7px}.aura-user-header .aura-user-actions .avatar{margin-left:8px}.aura-brand-status .pwa-header-install{padding:4px 8px;font-size:9px}}

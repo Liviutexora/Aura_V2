@@ -37,6 +37,7 @@ Route::middleware(['auth', 'active', 'verified:aura.verify-email'])->group(funct
     Route::get('/referrals', ReferralController::class)->name('aura.referrals');
     Route::get('/integrations', fn () => view('integrations.index', ['demoRoute' => 'integrations']))->name('aura.integrations');
     Route::get('/subscriptions', [SubscriptionController::class, 'show'])->name('aura.subscriptions');
+    Route::post('/subscriptions/selection', [SubscriptionController::class, 'choose'])->name('aura.subscriptions.choose');
     Route::get('/subscriptions/overview', [SubscriptionController::class, 'overview'])->name('aura.subscriptions.overview');
     Route::post('/subscriptions/trial', [SubscriptionController::class, 'trial'])->middleware('throttle:10,1')->name('aura.subscriptions.trial');
     Route::post('/subscriptions/redeem', [SubscriptionController::class, 'redeem'])->middleware('throttle:10,1')->name('aura.subscriptions.redeem');

@@ -124,7 +124,10 @@ class ProjectController extends Controller
 
     public function dashboard(Request $request): View
     {
-        return view('dashboard.index', $this->dashboardData($request) + ['demoRoute' => 'dashboard']);
+        return view('dashboard.index', $this->dashboardData($request) + [
+            'demoRoute' => 'dashboard',
+            'hasActiveMembership' => $this->access->current($request->user()) !== null,
+        ]);
     }
 
     private function catalogLevel(User $user): int

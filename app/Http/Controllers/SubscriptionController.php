@@ -9,6 +9,7 @@ use App\Services\SubscriptionAccess;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class SubscriptionController extends Controller
@@ -36,21 +37,38 @@ class SubscriptionController extends Controller
             ->orderBy('id')
             ->first();
         $hasFutureMembership = $current !== null || $scheduled !== null;
-        $trialPlan = ! $user->trial_used_at && ! $hasFutureMembership
+        $onboarding = (bool) $request->session()->get('subscriptions.onboarding') && ! $hasFutureMembership;
+        $activePlans = Plan::activeCatalog();
+        $selectedPlanId = $request->session()->get('subscriptions.selected_plan');
+        $selectedPlan = $activePlans->firstWhere('id', $selectedPlanId);
+        $trialEligible = ! $user->trial_used_at && ! $hasFutureMembership;
+        $trialPlan = $trialEligible && ! $onboarding
             ? Plan::where('is_active', true)->where('trial_days', '>', 0)
                 ->orderBy('access_level')->orderBy('id')->first()
             : null;
-        $activePlans = Plan::activeCatalog();
 
         return view('subscriptions.index', [
             'demoRoute' => 'subscriptions',
             'activePlans' => $activePlans,
-            'selectedPlanId' => $request->session()->pull('subscriptions.selected_plan'),
+            'selectedPlanId' => $selectedPlan?->id,
+            'selectedPlan' => $selectedPlan,
+            'onboarding' => $onboarding,
+            'trialEligible' => $trialEligible,
+            'selectionUnavailable' => $selectedPlanId !== null && $selectedPlan === null,
             'currentMembership' => $current,
             'scheduledMembership' => $scheduled,
             'trialPlan' => $trialPlan,
             'remainingDays' => $current ? (int) ceil(now()->diffInDays($current->ends_at)) : null,
         ]);
+    }
+
+    public function choose(Request $request): JsonResponse
+    {
+        $data = $request->validate(['plan_id' => ['required', 'integer', 'min:1']]);
+        $plan = Plan::whereKey($data['plan_id'])->where('is_active', true)->firstOrFail();
+        $request->session()->put('subscriptions.selected_plan', $plan->id);
+
+        return response()->json(['plan_id' => $plan->id]);
     }
 
     public function overview(Request $request, SubscriptionAccess $access): JsonResponse
@@ -70,8 +88,12 @@ class SubscriptionController extends Controller
     public function trial(Request $request, MembershipService $service): JsonResponse
     {
         $data = $request->validate(['plan_id' => 'required|integer|min:1', 'request_key' => 'required|uuid']);
+        $this->requireSelectedPlan($request, $data['plan_id']);
 
-        return response()->json($service->trial($request->user(), $data['plan_id'], $data['request_key']), 201);
+        $membership = $service->trial($request->user(), $data['plan_id'], $data['request_key']);
+        $this->finishOnboarding($request);
+
+        return response()->json($membership, 201);
     }
 
     public function redeem(Request $request, MembershipService $service): JsonResponse
@@ -86,8 +108,27 @@ class SubscriptionController extends Controller
             'timing' => ['required', 'in:now,period_end'],
             'request_key' => ['required', 'uuid'],
         ]);
+        $this->requireSelectedPlan($request, $data['plan_id']);
 
-        return response()->json($service->redeem($request->user(), $data['code'], $data['plan_id'], $data['timing'], $data['request_key'],
-            $data['confirm_replace_membership_id'] ?? null, $data['confirm_replace_ends_at'] ?? null), 201);
+        $membership = $service->redeem($request->user(), $data['code'], $data['plan_id'], $data['timing'], $data['request_key'],
+            $data['confirm_replace_membership_id'] ?? null, $data['confirm_replace_ends_at'] ?? null);
+        $this->finishOnboarding($request);
+
+        return response()->json($membership, 201);
+    }
+
+    private function finishOnboarding(Request $request): void
+    {
+        if ($request->session()->get('subscriptions.onboarding')) {
+            $request->session()->forget('subscriptions.onboarding');
+        }
+        $request->session()->forget('subscriptions.selected_plan');
+    }
+
+    private function requireSelectedPlan(Request $request, int $planId): void
+    {
+        if ($request->session()->get('subscriptions.onboarding') && (int) $request->session()->get('subscriptions.selected_plan') !== $planId) {
+            throw ValidationException::withMessages(['plan_id' => 'Selectează planul înainte de activare.']);
+        }
     }
 }

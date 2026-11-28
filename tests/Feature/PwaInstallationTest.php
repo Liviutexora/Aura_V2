@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use App\Services\UserHeaderStatus;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Tests\TestCase;
 
@@ -161,5 +162,39 @@ class PwaInstallationTest extends TestCase
         $this->assertFileExists(public_path('assets/aura/pwa/icon-512.png'));
         $this->assertFileExists(public_path('assets/aura/pwa/icon-maskable-192.png'));
         $this->assertFileExists(public_path('assets/aura/pwa/icon-maskable-512.png'));
+    }
+
+    public function test_active_user_pages_render_the_shared_header_install_control(): void
+    {
+        config()->set('pwa.enabled', true);
+        $user = User::factory()->create(['status' => 'active']);
+
+        $dashboard = $this->actingAs($user)->get('/dashboard')->assertOk()
+            ->assertSee('data-pwa-header-install', false)
+            ->assertSee('data-pwa-header-status', false)
+            ->assertSee('Install App');
+        $this->assertSame(1, substr_count($dashboard->getContent(), 'data-pwa-header-install'));
+
+        $settings = $this->get('/settings')->assertOk()
+            ->assertSee('data-pwa-header-install', false)
+            ->assertSee('data-pwa-install-panel', false)
+            ->assertSee('data-pwa-install', false);
+        $this->assertSame(1, substr_count($settings->getContent(), 'assets/aura/pwa.js'));
+    }
+
+    public function test_header_keeps_the_original_status_when_installation_is_not_allowed(): void
+    {
+        config()->set('pwa.enabled', false);
+        $active = User::factory()->create(['status' => 'active']);
+
+        $this->actingAs($active)->get('/dashboard')->assertOk()
+            ->assertSee('data-pwa-header-status', false)
+            ->assertDontSee('data-pwa-header-install', false);
+
+        config()->set('pwa.enabled', true);
+        $suspended = User::factory()->create(['status' => 'suspended']);
+        $status = app(UserHeaderStatus::class)->for($suspended);
+        $this->assertSame('Cont suspendat', $status['label']);
+        $this->assertFalse($status['installable']);
     }
 }

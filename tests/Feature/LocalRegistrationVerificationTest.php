@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Plan;
 use App\Models\User;
 use App\Notifications\VerifyEmailCode;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
@@ -18,10 +19,12 @@ class LocalRegistrationVerificationTest extends TestCase
         $this->app->instance('env', 'local');
         config()->set('auth.email_verification', false);
         Notification::fake();
+        $plan = Plan::factory()->create();
+        $this->get(route('aura.subscriptions.select', $plan))->assertRedirectToRoute('aura.register');
 
         $this->withSession(['_token' => 'registration-test-token'])
             ->post('/register', $this->registration('local@example.test') + ['_token' => 'registration-test-token'])
-            ->assertRedirectToRoute('aura.dashboard');
+            ->assertRedirectToRoute('aura.subscriptions');
 
         $user = User::where('email', 'local@example.test')->firstOrFail();
         $this->assertAuthenticatedAs($user);
@@ -29,6 +32,7 @@ class LocalRegistrationVerificationTest extends TestCase
         $this->assertNull($user->email_code_digest);
         $this->assertNull($user->email_code_sent_at);
         Notification::assertNothingSent();
+        $this->get('/subscriptions')->assertOk()->assertSee('data-selected="'.$plan->id.'"', false);
         $this->get('/dashboard')->assertOk();
     }
 
@@ -66,12 +70,13 @@ class LocalRegistrationVerificationTest extends TestCase
         $this->assertNotNull($user->email_code_sent_at);
     }
 
-    /** @return array{name: string, email: string, terms: string, password: string, password_confirmation: string} */
+    /** @return array{name: string, email: string, phone: string, terms: string, password: string, password_confirmation: string} */
     private function registration(string $email): array
     {
         return [
             'name' => 'Cont local de test',
             'email' => $email,
+            'phone' => '0712345678',
             'terms' => '1',
             'password' => 'Test-password-123',
             'password_confirmation' => 'Test-password-123',

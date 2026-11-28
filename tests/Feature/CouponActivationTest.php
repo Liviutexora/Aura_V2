@@ -149,7 +149,7 @@ class CouponActivationTest extends TestCase
         $this->get(route('aura.subscriptions.select', $inactive))->assertNotFound();
         $this->get(route('aura.subscriptions.select', $plan))->assertRedirectToRoute('aura.register');
         if ($register) {
-            $this->post('/register', ['name' => 'Ana', 'email' => 'ana@example.org', 'password' => 'StrongPass!123',
+            $this->post('/register', ['name' => 'Ana', 'email' => 'ana@example.org', 'phone' => '0712345678', 'password' => 'StrongPass!123',
                 'password_confirmation' => 'StrongPass!123', 'terms' => '1'])->assertRedirectToRoute('aura.verify-email');
             $user = User::where('email', 'ana@example.org')->sole();
             $code = Notification::sent($user, VerifyEmailCode::class)->sole()->code;
