@@ -25,6 +25,8 @@ class AuthController extends Controller
 {
     private const REGISTRATION_SPONSOR = 'registration.sponsor_id';
 
+    private const PHONE_PATTERN = '/\A\+[1-9][0-9]{7,14}\z/D';
+
     private const FORM_MESSAGES = [
         'email.required' => 'Introdu adresa de email.',
         'email.email' => 'Introdu o adresă de email validă.',
@@ -97,18 +99,12 @@ class AuthController extends Controller
         if (is_string($request->input('email'))) {
             $request->merge(['email' => Str::lower($request->input('email'))]);
         }
-        if (is_string($request->input('phone'))) {
-            $phone = preg_replace('/[\x20\t().-]+/', '', trim($request->input('phone')));
-            if (preg_match('/\A07[0-9]{8}\z/D', $phone)) {
-                $phone = '+4'.$phone;
-            }
-            $request->merge(['phone' => $phone]);
-        }
+        $this->normalizePhone($request);
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'min:2', 'max:255'],
             'email' => ['bail', 'required', 'email:rfc', 'max:255', $this->uniqueEmail()],
-            'phone' => ['bail', 'required', 'string', 'regex:/\A\+[1-9][0-9]{7,14}\z/D'],
+            'phone' => ['bail', 'required', 'string', 'regex:'.self::PHONE_PATTERN],
             'password' => ['required', 'string', 'confirmed', 'min:8'],
             'terms' => ['accepted'],
         ], self::FORM_MESSAGES);
@@ -152,6 +148,7 @@ class AuthController extends Controller
 
     public function updateProfile(Request $request): RedirectResponse
     {
+        $this->normalizePhone($request);
         $user = $request->user();
         $inputEmail = $request->input('email');
         $normalizedEmail = is_string($inputEmail) ? Str::lower($inputEmail) : '';
@@ -162,6 +159,8 @@ class AuthController extends Controller
         $validated = $request->validateWithBag('profileUpdate', [
             'name' => ['required', 'string', 'min:2', 'max:255'],
             'email' => ['bail', 'required', 'email:rfc', 'max:255', $this->uniqueEmail($user)],
+            'phone' => ['sometimes', 'nullable', 'string', 'regex:'.self::PHONE_PATTERN],
+            'locale' => ['sometimes', 'required', 'in:ro'],
             'current_password' => $emailChanged
                 ? ['required', 'string', 'current_password:web']
                 : ['exclude'],
@@ -170,8 +169,10 @@ class AuthController extends Controller
             'current_password.current_password' => 'Parola curentă este incorectă.',
         ] + self::FORM_MESSAGES);
 
+        $phoneAttributes = array_key_exists('phone', $validated) ? ['phone' => $validated['phone']] : [];
+
         if ($emailChanged) {
-            DB::transaction(function () use ($user, $validated): void {
+            DB::transaction(function () use ($user, $validated, $phoneAttributes): void {
                 $current = User::query()->lockForUpdate()->findOrFail($user->getKey());
                 abort_unless($current->isActive() && $current->hasVerifiedEmail(), 403);
                 if (! Hash::check($validated['current_password'], $current->getAuthPassword())) {
@@ -182,14 +183,22 @@ class AuthController extends Controller
                     'name' => $validated['name'], 'email' => $validated['email'],
                     'email_verified_at' => null, 'email_code_digest' => null,
                     'email_code_sent_at' => null, 'email_code_failures' => 0,
-                ])->save();
+                ] + $phoneAttributes)->save();
+                if (array_key_exists('locale', $validated)) {
+                    $current->profile()->updateOrCreate([], ['locale' => $validated['locale']]);
+                }
                 Password::deleteToken($current);
             });
 
             return redirect()->route('aura.verify-email')->with('status', $this->codes->issue($user));
         }
 
-        $user->update(['name' => $validated['name']]);
+        DB::transaction(function () use ($user, $validated, $phoneAttributes): void {
+            $user->forceFill(['name' => $validated['name']] + $phoneAttributes)->save();
+            if (array_key_exists('locale', $validated)) {
+                $user->profile()->updateOrCreate([], ['locale' => $validated['locale']]);
+            }
+        });
 
         return back()->with('profile_status', 'Datele contului au fost actualizate.');
     }
@@ -274,6 +283,20 @@ class AuthController extends Controller
             ? redirect()->route($area === 'admin' ? 'aura.admin.login' : 'aura.login')->with('status', 'Parola a fost schimbată. Te poți autentifica.')
             : redirect()->route($area === 'admin' ? 'aura.admin.password.request' : 'aura.forgot-password')
                 ->withErrors(['email' => 'Linkul este invalid sau a expirat. Solicită un link nou.']);
+    }
+
+    private function normalizePhone(Request $request): void
+    {
+        if (! is_string($request->input('phone'))) {
+            return;
+        }
+
+        $phone = preg_replace('/[\x20\t().-]+/', '', trim($request->input('phone')));
+        if (preg_match('/\A07[0-9]{8}\z/D', $phone)) {
+            $phone = '+4'.$phone;
+        }
+
+        $request->merge(['phone' => $phone === '' ? null : $phone]);
     }
 
     private function uniqueEmail(?User $ignore = null): Closure

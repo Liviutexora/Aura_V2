@@ -1,8 +1,8 @@
 ﻿@extends('layouts.app')
 @section('body')
-<x-aura.user-header /><main class="wrap"><nav class="subnav" aria-label="Navigare utilizator"><a href="{{ route('aura.dashboard') }}" class="">Dashboard</a><a href="{{ route('aura.opportunities') }}" class="">Oportunități</a><a href="{{ route('aura.missions') }}" class="">Misiunile mele</a><a href="{{ route('aura.projects') }}" class="">Proiectele mele</a><a href="{{ route('aura.achievements') }}" class="">Realizări</a><a href="{{ route('aura.wallet') }}" class="">Wallet</a><a href="{{ route('aura.referrals') }}" class="">Recomandări</a><a href="{{ route('aura.integrations') }}" class="">Aplicațiile mele</a></nav><div class="detail"><div class="heading"><div><div class="eyebrow">SPAȚIUL TĂU DE OPORTUNITĂȚI</div><h1>Setările contului</h1><p>Datele tale și preferințele Aura.</p></div></div><x-aura.pwa-install /><form class="card settings-form" id="profile-form" method="POST" action="{{ route('aura.settings.profile.update') }}">@csrf<h2>Preferințe</h2>@if($errors->has('name') || $errors->has('email'))
+<x-aura.user-header /><main class="wrap"><nav class="subnav" aria-label="Navigare utilizator"><a href="{{ route('aura.dashboard') }}" class="">Dashboard</a><a href="{{ route('aura.opportunities') }}" class="">Oportunități</a><a href="{{ route('aura.missions') }}" class="">Misiunile mele</a><a href="{{ route('aura.projects') }}" class="">Proiectele mele</a><a href="{{ route('aura.achievements') }}" class="">Realizări</a><a href="{{ route('aura.wallet') }}" class="">Wallet</a><a href="{{ route('aura.referrals') }}" class="">Recomandări</a><a href="{{ route('aura.integrations') }}" class="">Aplicațiile mele</a></nav><div class="detail"><div class="heading"><div><div class="eyebrow">SPAȚIUL TĂU DE OPORTUNITĂȚI</div><h1>Setările contului</h1><p>Datele tale și preferințele Aura.</p></div></div><x-aura.pwa-install /><form class="card settings-form" id="profile-form" method="POST" action="{{ route('aura.settings.profile.update') }}">@csrf<h2>Preferințe</h2>@if($errors->has('name') || $errors->has('email') || $errors->has('phone'))
 <div class="notice" role="alert" style="color:#ff9fb1">
-    @foreach(array_merge($errors->get('name'), $errors->get('email')) as $message)
+    @foreach(array_merge($errors->get('name'), $errors->get('email'), $errors->get('phone')) as $message)
         {{ $message }}<br>
     @endforeach
 </div>
@@ -20,7 +20,16 @@
 @error('email', 'profileUpdate')
 <small role="alert" style="display:block;color:#ff9fb1;margin-top:6px">{{ $message }}</small>
 @enderror
-<label>Limba interfeței</label><select><option>Română</option></select><label><input type="checkbox" checked style="width:auto"> Mementouri despre misiuni (preferință demo)</label><label><input type="checkbox" style="width:auto"> Noutăți și oportunități recomandate (preferință demo)</label><button class="btn" type="submit" data-profile-save style="margin-top:20px">Salvează modificările</button></form>
+<label for="profile-phone">Telefon</label>
+<input id="profile-phone" name="phone" type="tel" value="{{ old('phone', auth()->user()->phone ?? '') }}" autocomplete="tel">
+@error('phone', 'profileUpdate')
+<small role="alert" style="display:block;color:#ff9fb1;margin-top:6px">{{ $message }}</small>
+@enderror
+<label for="profile-locale">Limba interfeței</label><select id="profile-locale" name="locale"><option value="ro">Română</option></select>
+@error('locale', 'profileUpdate')
+<small role="alert" style="display:block;color:#ff9fb1;margin-top:6px">{{ $message }}</small>
+@enderror
+<label><input type="checkbox" checked style="width:auto"> Mementouri despre misiuni (preferință demo)</label><label><input type="checkbox" style="width:auto"> Noutăți și oportunități recomandate (preferință demo)</label><button class="btn" type="submit" data-profile-save style="margin-top:20px">Salvează modificările</button></form>
 <template id="profile-email-confirmation-template" data-current-email="{{ auth()->user()->email }}" data-reopen="{{ $errors->profileUpdate->has('current_password') ? '1' : '0' }}">
 <button class="dialog-close" type="button" data-profile-email-cancel aria-label="Închide dialogul">✕</button>
 <h2>Confirmă identitatea</h2>
